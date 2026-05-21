@@ -88,8 +88,6 @@
       background: white;
     }
 
-
-
     .url-row {
       display: flex;
       align-items: center;
@@ -125,14 +123,8 @@
       margin-left: 0;
     }
 
-    .copy-btn:hover {
-      background: #0056b3;
-      border-color: #0056b3;
-    }
-
-    .copy-btn:active {
-      background: #004494;
-    }
+    .copy-btn:hover { background: #0056b3; border-color: #0056b3; }
+    .copy-btn:active { background: #004494; }
 
     .edit-btn {
       background: #f0f0f0;
@@ -147,9 +139,7 @@
       height: 26px;
     }
 
-    .edit-btn:hover {
-      background: #e0e0e0;
-    }
+    .edit-btn:hover { background: #e0e0e0; }
 
     /* ── Editor Modal ── */
     #editorOverlay {
@@ -162,9 +152,7 @@
       justify-content: center;
     }
 
-    #editorOverlay.open {
-      display: flex;
-    }
+    #editorOverlay.open { display: flex; }
 
     #editorModal {
       background: #fff;
@@ -181,34 +169,14 @@
     }
 
     @media (max-width: 600px) {
-      #editorModal {
-        width: 100vw;
-        height: 100vh;
-        border-radius: 0;
-        padding: 12px;
-      }
-      #editorBody {
-        flex-direction: column;
-      }
-      #editorControls {
-        width: 100%;
-        flex-direction: row;
-        flex-wrap: wrap;
-        gap: 10px;
-      }
-      .ctrl-section {
-        flex: 1;
-        min-width: 140px;
-      }
+      #editorModal { width: 100vw; height: 100vh; border-radius: 0; padding: 12px; }
+      #editorBody { flex-direction: column; }
+      #editorControls { width: 100%; flex-direction: row; flex-wrap: wrap; gap: 10px; }
+      .ctrl-section { flex: 1; min-width: 140px; }
     }
 
-    #editorModal h2 {
-      margin: 0;
-      font-size: 15px;
-      color: #333;
-    }
+    #editorModal h2 { margin: 0; font-size: 15px; color: #333; }
 
-    /* image + controls side by side */
     #editorBody {
       display: flex;
       gap: 16px;
@@ -230,7 +198,6 @@
       padding: 8px;
     }
 
-    /* Resize container — exactly matches the image size */
     #resizeContainer {
       position: relative;
       display: inline-flex;
@@ -251,7 +218,6 @@
       will-change: width, height;
     }
 
-    /* Resize handles */
     .rh {
       position: absolute;
       width: 7px;
@@ -268,7 +234,6 @@
 
     #resizeContainer.handles-on .rh { opacity: 1; pointer-events: all; }
 
-    /* Positions — centered exactly on each edge */
     .rh-nw { top:0;    left:0;   transform: translate(-50%, -50%); cursor: nw-resize; }
     .rh-n  { top:0;    left:50%; transform: translate(-50%, -50%); cursor: n-resize; }
     .rh-ne { top:0;    right:0;  transform: translate(50%, -50%);  cursor: ne-resize; }
@@ -278,7 +243,6 @@
     .rh-sw { bottom:0; left:0;   transform: translate(-50%, 50%);  cursor: sw-resize; }
     .rh-w  { top:50%;  left:0;   transform: translate(-50%, -50%); cursor: w-resize; }
 
-    /* Size label */
     #resizeLabel {
       position: absolute;
       bottom: -22px;
@@ -291,7 +255,6 @@
       pointer-events: none;
     }
 
-    /* right panel */
     #editorControls {
       width: 170px;
       flex-shrink: 0;
@@ -301,16 +264,9 @@
       align-self: stretch;
     }
 
-    #editorControls .ctrl-spacer {
-      flex: 1;
-    }
+    #editorControls .ctrl-spacer { flex: 1; }
 
-    .ctrl-section {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      padding-top: 4px;
-    }
+    .ctrl-section { display: flex; flex-direction: column; gap: 8px; padding-top: 4px; }
 
     .ctrl-label {
       font-size: 11px;
@@ -320,311 +276,189 @@
       letter-spacing: 0.05em;
     }
 
-    .slider-row {
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-      margin-bottom: 8px;
-    }
+    .slider-row { display: flex; flex-direction: column; gap: 5px; margin-bottom: 8px; }
 
-    .slider-row-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
+    .slider-row-header { display: flex; justify-content: space-between; align-items: center; }
 
-    .slider-row-header label {
-      font-size: 13px;
-      color: #333;
-      font-weight: bold;
-    }
+    .slider-row-header label { font-size: 13px; color: #333; font-weight: bold; }
 
-    .slider-row-header span {
-      font-size: 11px;
-      color: #666;
-      min-width: 28px;
-      text-align: right;
-    }
+    .slider-row-header span { font-size: 11px; color: #666; min-width: 28px; text-align: right; }
 
     .slider-row input[type=range] {
-      width: 100%;
-      height: 4px;
-      accent-color: #007BFF;
-      cursor: pointer;
-      border: none;
-      padding: 0;
-      border-radius: 0;
-      font-size: unset;
-      background: none;
-      box-shadow: none;
-      margin-left: 0;
+      width: 100%; height: 4px; accent-color: #007BFF; cursor: pointer;
+      border: none; padding: 0; border-radius: 0; font-size: unset;
+      background: none; box-shadow: none; margin-left: 0;
     }
 
-    /* Rotation dial */
-    .rotation-dial-wrap {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 6px;
-    }
+    .rotation-dial-wrap { display: flex; flex-direction: column; align-items: center; gap: 6px; }
 
     #rotationDial {
-      width: 80px;
-      height: 80px;
-      border-radius: 50%;
-      background: #f5f5f5;
-      border: 2px solid #ddd;
-      position: relative;
-      cursor: grab;
-      touch-action: none;
-      user-select: none;
-      box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+      width: 80px; height: 80px; border-radius: 50%;
+      background: #f5f5f5; border: 2px solid #ddd;
+      position: relative; cursor: grab; touch-action: none;
+      user-select: none; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
     }
 
     #rotationDial:active { cursor: grabbing; }
 
     #rotationDial::before {
-      content: '';
-      position: absolute;
-      inset: 8px;
-      border-radius: 50%;
-      border: 1px dashed #ccc;
+      content: ''; position: absolute; inset: 8px;
+      border-radius: 50%; border: 1px dashed #ccc;
     }
 
     #dialPointer {
-      position: absolute;
-      width: 2px;
-      height: 22px;
-      background: #007BFF;
-      border-radius: 2px 2px 0 0;
-      left: 50%;
-      top: 8px;
-      transform-origin: center 32px;
+      position: absolute; width: 2px; height: 22px;
+      background: #007BFF; border-radius: 2px 2px 0 0;
+      left: 50%; top: 8px; transform-origin: center 32px;
       transform: translateX(-50%);
     }
 
     #dialCenter {
-      position: absolute;
-      width: 8px;
-      height: 8px;
-      background: #007BFF;
-      border: 2px solid #fff;
-      border-radius: 50%;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      z-index: 2;
-      pointer-events: none;
-      box-shadow: 0 0 3px rgba(0,0,0,0.2);
+      position: absolute; width: 8px; height: 8px;
+      background: #007BFF; border: 2px solid #fff; border-radius: 50%;
+      top: 50%; left: 50%; transform: translate(-50%, -50%);
+      z-index: 2; pointer-events: none; box-shadow: 0 0 3px rgba(0,0,0,0.2);
     }
 
-    #dialAngleLabel {
-      font-family: monospace;
-      font-size: 11px;
-      color: #666;
-      text-align: center;
-    }
+    #dialAngleLabel { font-family: monospace; font-size: 11px; color: #666; text-align: center; }
 
-    /* icon buttons row */
-    .icon-btn-row {
-      display: flex;
-      gap: 8px;
-      justify-content: center;
-    }
+    .icon-btn-row { display: flex; gap: 8px; justify-content: center; }
 
     .icon-btn {
-      width: 36px;
-      height: 36px;
-      border-radius: 6px;
-      border: 1px solid #ddd;
-      background: #f5f5f5;
-      color: #333;
-      font-size: 18px;
-      font-weight: bold;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.15s;
-      margin-left: 0;
-      padding: 0;
+      width: 36px; height: 36px; border-radius: 6px; border: 1px solid #ddd;
+      background: #f5f5f5; color: #333; font-size: 18px; font-weight: bold;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s; margin-left: 0; padding: 0;
     }
 
-    .icon-btn:hover {
-      background: #e0e0e0;
-      border-color: #bbb;
-    }
+    .icon-btn:hover { background: #e0e0e0; border-color: #bbb; }
 
-    /* bottom actions (inside right panel) */
-    .editor-actions {
-      display: flex;
-      gap: 8px;
-      justify-content: center;
-      flex-direction: column;
-    }
+    .editor-actions { display: flex; gap: 8px; justify-content: center; flex-direction: column; }
 
-    .editor-actions button {
-      font-size: 13px;
-      padding: 7px 0;
-      margin-left: 0;
-      width: 100%;
-    }
+    .editor-actions button { font-size: 13px; padding: 7px 0; margin-left: 0; width: 100%; }
 
-    #resetBtn {
-      background: #f0f0f0;
-      color: #555;
-      border: 1px solid #ddd;
-    }
-
+    #resetBtn { background: #f0f0f0; color: #555; border: 1px solid #ddd; }
     #resetBtn:hover { background: #e0e0e0; }
-
-    #closeEditorBtn {
-      background: #dc3545;
-    }
-
+    #closeEditorBtn { background: #dc3545; }
     #closeEditorBtn:hover { background: #b02a37; }
 
     #editorCloseX {
-      position: absolute;
-      top: 12px;
-      right: 12px;
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      background: #dc3545;
-      color: white;
-      border: none;
-      font-size: 14px;
-      font-weight: bold;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      line-height: 1;
-      padding: 0;
-      margin: 0;
-      transition: background 0.2s;
-      z-index: 10;
+      position: absolute; top: 12px; right: 12px; width: 28px; height: 28px;
+      border-radius: 50%; background: #dc3545; color: white; border: none;
+      font-size: 14px; font-weight: bold; cursor: pointer; display: flex;
+      align-items: center; justify-content: center; line-height: 1;
+      padding: 0; margin: 0; transition: background 0.2s; z-index: 10;
     }
 
     #editorCloseX:hover { background: #b02a37; }
 
-    /* Scroll to Top Button Styling */
     #scrollTopWrapper {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      z-index: 999;
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      cursor: pointer;
-      text-align: center;
-      animation: fadeIn 0.3s ease-in-out;
+      position: fixed; bottom: 20px; right: 20px; z-index: 999;
+      display: none; flex-direction: column; align-items: center;
+      cursor: pointer; text-align: center; animation: fadeIn 0.3s ease-in-out;
     }
 
     .scroll-icon {
-        background-color: #00aaff;
-        color: white;
-        font-size: 24px;
-        font-weight: 900;
-        font-family: monospace;
-        border-radius: 50%;
-        width: 40px;
-        height: 40px;
-        line-height: 40px;
-        text-align: center;
-        box-shadow: 0px 3px 7px rgba(0, 0, 0, 0.2);
-        transition: all 0.3s ease;
+      background-color: #00aaff; color: white; font-size: 24px; font-weight: 900;
+      font-family: monospace; border-radius: 50%; width: 40px; height: 40px;
+      line-height: 40px; text-align: center; box-shadow: 0px 3px 7px rgba(0,0,0,0.2);
+      transition: all 0.3s ease;
     }
 
-    .scroll-icon:hover {
-      background-color: #0077cc;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-      transform: scale(1.05);
-    }
+    .scroll-icon:hover { background-color: #0077cc; box-shadow: 0 4px 10px rgba(0,0,0,0.3); transform: scale(1.05); }
 
-    .scroll-text {
-      margin-top: 4px;
-      font-size: 10px;
-      color: #007BFF;
-      font-weight: bold;
-      text-transform: uppercase;
-    }
+    .scroll-text { margin-top: 4px; font-size: 10px; color: #007BFF; font-weight: bold; text-transform: uppercase; }
 
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(10px); }
       to   { opacity: 1; transform: translateY(0); }
     }
 
-    /* Fixed shrinking header */
+    /* ── Fixed shrinking header ── */
     #siteHeader {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      z-index: 100;
-      background-color: #f4f4f4;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 10px;
-      transition: padding 0.3s ease, box-shadow 0.3s ease;
-      box-shadow: none;
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background-color: #f4f4f4; display: flex; flex-direction: column;
+      align-items: center; padding: 10px;
+      transition: padding 0.3s ease, box-shadow 0.3s ease; box-shadow: none;
     }
 
     #siteHeader.shrunk {
-      flex-direction: row;
-      justify-content: center;
-      gap: 12px;
-      padding: 6px 16px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      flex-direction: row; justify-content: center; align-items: center;
+      gap: 12px; padding: 6px 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);
     }
 
-    #siteHeader h1 {
-      margin: 0.67em 0;
-      color: #333;
-      transition: font-size 0.3s ease, margin 0.3s ease;
+    #siteHeader h1 { margin: 0.67em 0; color: #333; transition: font-size 0.3s ease, margin 0.3s ease; }
+    #siteHeader.shrunk h1 { font-size: 16px; white-space: nowrap; margin: 0; }
+
+    #siteHeader .form-container { transition: width 0.3s ease, max-width 0.3s ease, padding 0.3s ease; }
+
+    #siteHeader textarea { height: 50px; font-size: 16px; transition: height 0.3s ease, font-size 0.3s ease, padding 0.3s ease; }
+
+    #siteHeader.shrunk .form-container { width: auto; flex: 1; max-width: 500px; padding: 5px 8px; }
+    #siteHeader.shrunk textarea { height: 32px; font-size: 13px; padding: 5px 8px; }
+    #siteHeader.shrunk button { padding: 6px 14px; font-size: 13px; }
+
+    #headerPlaceholder { width: 100%; flex-shrink: 0; }
+
+    /* ── Global image controls ── */
+    #globalControls {
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+      flex-shrink: 0;
+      min-width: 220px;
+      max-width: 260px;
     }
 
-    #siteHeader.shrunk h1 {
-      font-size: 16px;
-      white-space: nowrap;
-      margin: 0;
+    .g-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
-    #siteHeader .form-container {
-      transition: width 0.3s ease, max-width 0.3s ease, padding 0.3s ease;
+    .g-row label {
+      font-size: 11px;
+      font-weight: bold;
+      color: #555;
+      width: 65px;
+      flex-shrink: 0;
+      text-align: right;
     }
 
-    #siteHeader textarea {
-      height: 50px;
-      font-size: 16px;
-      transition: height 0.3s ease, font-size 0.3s ease, padding 0.3s ease;
-    }
-
-    #siteHeader.shrunk .form-container {
-      width: auto;
+    .g-row input[type=range] {
       flex: 1;
-      max-width: 500px;
-      padding: 5px 8px;
+      height: 4px;
+      accent-color: #007BFF;
+      cursor: pointer;
+      border: none;
+      padding: 0;
+      background: none;
+      margin-left: 0;
     }
 
-    #siteHeader.shrunk textarea {
-      height: 32px;
-      font-size: 13px;
-      padding: 5px 8px;
-    }
-
-    #siteHeader.shrunk button {
-      padding: 6px 14px;
-      font-size: 13px;
-    }
-
-    #headerPlaceholder {
-      width: 100%;
+    .g-row span {
+      font-size: 11px;
+      color: #666;
+      width: 24px;
+      text-align: right;
+      font-family: monospace;
       flex-shrink: 0;
     }
+
+    #globalResetBtn {
+      align-self: flex-end;
+      background: #f0f0f0;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 2px 10px;
+      font-size: 10px;
+      color: #555;
+      cursor: pointer;
+      margin-left: 0;
+      margin-top: 1px;
+    }
+
+    #globalResetBtn:hover { background: #e0e0e0; }
   </style>
 </head>
 <body>
@@ -635,6 +469,19 @@
         <textarea id="urls" placeholder="Paste image URLs (one per line)"></textarea>
         <button type="submit">Load Images</button>
       </form>
+    </div>
+    <div id="globalControls">
+      <div class="g-row">
+        <label>Brightness</label>
+        <input type="range" id="globalBrightness" min="-100" max="100" value="0" oninput="applyGlobal()">
+        <span id="globalBrightnessVal">0</span>
+      </div>
+      <div class="g-row">
+        <label>Contrast</label>
+        <input type="range" id="globalContrast" min="-100" max="100" value="0" oninput="applyGlobal()">
+        <span id="globalContrastVal">0</span>
+      </div>
+      <button id="globalResetBtn" onclick="resetGlobal()">Reset</button>
     </div>
   </div>
   <div id="headerPlaceholder"></div>
@@ -648,7 +495,6 @@
       <h2 id="editorTitle">Edit Image</h2>
 
       <div id="editorBody">
-        <!-- Image -->
         <div id="editorImgWrap">
           <div id="resizeContainer">
             <img id="editorImg" src="" alt="Edit preview" />
@@ -664,7 +510,6 @@
           </div>
         </div>
 
-        <!-- Right Controls -->
         <div id="editorControls">
 
           <div class="ctrl-section" style="padding-top: 16px;">
@@ -745,19 +590,24 @@
       });
     }
 
-    const BATCH_SIZE = 50;
+    const BATCH_SIZE = 30;
     let allUrls = [];
     let currentIndex = 0;
     let sentinelObserver = null;
 
     // ── Lazy image loader ─────────────────────────────────────
-    // Images get src only when near viewport — never aborted once started
     const lazyObserver = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (!entry.isIntersecting) return;
         const img = entry.target;
         if (img.src) return;
         img.src = img.dataset.src;
+        // Apply current global filter to newly loaded image
+        const b = parseInt(document.getElementById("globalBrightness").value);
+        const c = parseInt(document.getElementById("globalContrast").value);
+        if (b !== 0 || c !== 0) {
+          img.style.filter = `brightness(${(b + 100) / 100}) contrast(${(c + 100) / 100})`;
+        }
         lazyObserver.unobserve(img);
       });
     }, { rootMargin: "300px 0px" });
@@ -773,7 +623,6 @@
       const img = document.createElement("img");
       img.dataset.src = url;
       img.alt = "Image";
-
       lazyObserver.observe(img);
 
       const urlRow = document.createElement("div");
@@ -804,6 +653,25 @@
       return container;
     }
 
+    // ── Global controls ───────────────────────────────────────
+    function applyGlobal() {
+      const b = parseInt(document.getElementById("globalBrightness").value);
+      const c = parseInt(document.getElementById("globalContrast").value);
+      document.getElementById("globalBrightnessVal").textContent = b;
+      document.getElementById("globalContrastVal").textContent   = c;
+      document.querySelectorAll("#imageGallery img").forEach(img => {
+        img.style.filter = `brightness(${(b + 100) / 100}) contrast(${(c + 100) / 100})`;
+      });
+    }
+
+    function resetGlobal() {
+      document.getElementById("globalBrightness").value = 0;
+      document.getElementById("globalContrast").value   = 0;
+      document.getElementById("globalBrightnessVal").textContent = 0;
+      document.getElementById("globalContrastVal").textContent   = 0;
+      document.querySelectorAll("#imageGallery img").forEach(img => { img.style.filter = ""; });
+    }
+
     // ── Editor ────────────────────────────────────────────────
     let currentRotation = 0;
     let currentZoom     = 1;
@@ -814,15 +682,13 @@
       resetEditor();
       document.getElementById("editorOverlay").classList.add("open");
       document.body.style.overflow = "hidden";
-
       editorImg.style.width = editorImg.style.height = "";
       editorImg.style.maxWidth = editorImg.style.maxHeight = "";
-
       editorImg.onload = function () {
-        const wrap   = document.getElementById("editorImgWrap");
-        const maxW   = wrap.clientWidth  - 16;
-        const maxH   = wrap.clientHeight - 16;
-        const scale  = Math.min(1, maxW / editorImg.naturalWidth, maxH / editorImg.naturalHeight);
+        const wrap  = document.getElementById("editorImgWrap");
+        const maxW  = wrap.clientWidth  - 16;
+        const maxH  = wrap.clientHeight - 16;
+        const scale = Math.min(1, maxW / editorImg.naturalWidth, maxH / editorImg.naturalHeight);
         editorImg.style.width     = Math.round(editorImg.naturalWidth  * scale) + "px";
         editorImg.style.height    = Math.round(editorImg.naturalHeight * scale) + "px";
         editorImg.style.maxWidth  = "none";
@@ -845,10 +711,7 @@
         `brightness(${(brightness + 100) / 100}) contrast(${(contrast + 100) / 100})`;
     }
 
-    function rotateImage(deg) {
-      currentRotation = (currentRotation + deg + 360) % 360;
-      applyTransform();
-    }
+    function rotateImage(deg) { currentRotation = (currentRotation + deg + 360) % 360; applyTransform(); }
 
     function zoomImage(delta) {
       currentZoom = Math.min(4, Math.max(0.2, +(currentZoom + delta).toFixed(1)));
@@ -863,9 +726,7 @@
     }
 
     function resetEditor() {
-      currentRotation = 0;
-      currentZoom     = 1;
-      panX = 0; panY = 0;
+      currentRotation = 0; currentZoom = 1; panX = 0; panY = 0;
       document.getElementById("brightnessSlider").value    = 0;
       document.getElementById("contrastSlider").value      = 0;
       document.getElementById("brightnessVal").textContent = 0;
@@ -922,16 +783,13 @@
       const dx = pendingResizeX - resizeStartX;
       const dy = pendingResizeY - resizeStartY;
       let newW = resizeStartW, newH = resizeStartH, adjX = 0, adjY = 0;
-
       if (resizeDir.includes("e")) newW = Math.max(40, resizeStartW + dx);
       if (resizeDir.includes("s")) newH = Math.max(40, resizeStartH + dy);
       if (resizeDir.includes("w")) { newW = Math.max(40, resizeStartW - dx); adjX = (resizeStartW - newW) / 2; }
       if (resizeDir.includes("n")) { newH = Math.max(40, resizeStartH - dy); adjY = (resizeStartH - newH) / 2; }
-
       panX = resizePanStartX + adjX;
       panY = resizePanStartY + adjY;
       resizeCont.style.transform = `translate(${panX}px, ${panY}px) rotate(${currentRotation + dialAngle}deg) scale(${currentZoom})`;
-
       const changesW = resizeDir.includes("e") || resizeDir.includes("w");
       const changesH = resizeDir.includes("n") || resizeDir.includes("s");
       if (changesW) { imgEl.style.width = newW + "px"; imgEl.style.maxWidth = "none"; }
@@ -990,12 +848,8 @@
       dialCenterX = r.left + r.width / 2; dialCenterY = r.top + r.height / 2;
       e.preventDefault();
     });
-    window.addEventListener("mousemove", (e) => {
-      if (!dialDragging) return;
-      updateDial(getAngleFromCenter(dialCenterX, dialCenterY, e.clientX, e.clientY));
-    });
+    window.addEventListener("mousemove", (e) => { if (!dialDragging) return; updateDial(getAngleFromCenter(dialCenterX, dialCenterY, e.clientX, e.clientY)); });
     window.addEventListener("mouseup", () => { dialDragging = false; });
-
     dial.addEventListener("touchstart", (e) => {
       dialDragging = true;
       const r = dial.getBoundingClientRect();
@@ -1017,8 +871,7 @@
     imgEl.addEventListener("mousedown", (e) => {
       isDragging = true;
       startX = e.clientX - panX; startY = e.clientY - panY;
-      imgEl.style.cursor = "grabbing";
-      e.preventDefault();
+      imgEl.style.cursor = "grabbing"; e.preventDefault();
     });
 
     window.addEventListener("mousemove", (e) => {
@@ -1026,8 +879,7 @@
       pendingPanX = e.clientX - startX; pendingPanY = e.clientY - startY;
       if (panRafId) return;
       panRafId = requestAnimationFrame(() => {
-        panRafId = null;
-        panX = pendingPanX; panY = pendingPanY;
+        panRafId = null; panX = pendingPanX; panY = pendingPanY;
         resizeCont.style.transform = `translate(${panX}px, ${panY}px) rotate(${currentRotation + dialAngle}deg) scale(${currentZoom})`;
       });
     });
@@ -1059,10 +911,7 @@
       resizeCont.style.transform = `translate(${panX}px, ${panY}px) rotate(${currentRotation + dialAngle}deg) scale(${currentZoom})`;
     }, { passive: false });
 
-    document.getElementById("editorOverlay").addEventListener("click", function(e) {
-      if (e.target === this) closeEditor();
-    });
-
+    document.getElementById("editorOverlay").addEventListener("click", function(e) { if (e.target === this) closeEditor(); });
     document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeEditor(); });
 
     // ── Batch loader ──────────────────────────────────────────
@@ -1071,12 +920,10 @@
       const oldSentinel = document.getElementById("sentinel");
       if (oldSentinel) oldSentinel.remove();
       if (currentIndex >= allUrls.length) return;
-
       const fragment = document.createDocumentFragment();
       const end = Math.min(currentIndex + BATCH_SIZE, allUrls.length);
       for (let i = currentIndex; i < end; i++) fragment.appendChild(createCard(allUrls[i], i + 1));
       currentIndex = end;
-
       if (currentIndex < allUrls.length) {
         const sentinel = document.createElement("div");
         sentinel.id = "sentinel"; sentinel.style.height = "1px";
@@ -1096,6 +943,8 @@
       allUrls = document.getElementById("urls").value.split("\n").map(u => u.trim()).filter(Boolean);
       currentIndex = 0;
       document.getElementById("imageGallery").innerHTML = "";
+      document.getElementById("globalControls").style.display = "flex";
+      resetGlobal();
       if (sentinelObserver) sentinelObserver.disconnect();
       loadNextBatch();
     });

@@ -141,7 +141,7 @@
 
     .edit-btn:hover { background: #e0e0e0; }
 
-    /* ── Editor Modal ── */
+    /* Editor Modal */
     #editorOverlay {
       display: none;
       position: fixed;
@@ -277,11 +277,8 @@
     }
 
     .slider-row { display: flex; flex-direction: column; gap: 5px; margin-bottom: 8px; }
-
     .slider-row-header { display: flex; justify-content: space-between; align-items: center; }
-
     .slider-row-header label { font-size: 13px; color: #333; font-weight: bold; }
-
     .slider-row-header span { font-size: 11px; color: #666; min-width: 28px; text-align: right; }
 
     .slider-row input[type=range] {
@@ -334,7 +331,6 @@
     .icon-btn:hover { background: #e0e0e0; border-color: #bbb; }
 
     .editor-actions { display: flex; gap: 8px; justify-content: center; flex-direction: column; }
-
     .editor-actions button { font-size: 13px; padding: 7px 0; margin-left: 0; width: 100%; }
 
     #resetBtn { background: #f0f0f0; color: #555; border: 1px solid #ddd; }
@@ -366,7 +362,6 @@
     }
 
     .scroll-icon:hover { background-color: #0077cc; box-shadow: 0 4px 10px rgba(0,0,0,0.3); transform: scale(1.05); }
-
     .scroll-text { margin-top: 4px; font-size: 10px; color: #007BFF; font-weight: bold; text-transform: uppercase; }
 
     @keyframes fadeIn {
@@ -374,7 +369,7 @@
       to   { opacity: 1; transform: translateY(0); }
     }
 
-    /* ── Fixed shrinking header ── */
+    /* Fixed shrinking header */
     #siteHeader {
       position: fixed; top: 0; left: 0; right: 0; z-index: 100;
       background-color: #f4f4f4; display: flex; flex-direction: column;
@@ -389,25 +384,31 @@
 
     #siteHeader h1 { margin: 0.67em 0; color: #333; transition: font-size 0.3s ease, margin 0.3s ease; }
     #siteHeader.shrunk h1 { font-size: 16px; white-space: nowrap; margin: 0; }
-
     #siteHeader .form-container { transition: width 0.3s ease, max-width 0.3s ease, padding 0.3s ease; }
-
     #siteHeader textarea { height: 50px; font-size: 16px; transition: height 0.3s ease, font-size 0.3s ease, padding 0.3s ease; }
-
     #siteHeader.shrunk .form-container { width: auto; flex: 1; max-width: 500px; padding: 5px 8px; }
     #siteHeader.shrunk textarea { height: 32px; font-size: 13px; padding: 5px 8px; }
     #siteHeader.shrunk button { padding: 6px 14px; font-size: 13px; }
 
     #headerPlaceholder { width: 100%; flex-shrink: 0; }
 
-    /* ── Global image controls ── */
+    /* Global image controls — CHANGED: row layout, reset on right, blue reset */
     #globalControls {
       display: none;
+      flex-direction: row;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+      min-width: 260px;
+      max-width: 320px;
+    }
+
+    /* sliders column */
+    #globalSliders {
+      display: flex;
       flex-direction: column;
       gap: 5px;
-      flex-shrink: 0;
-      min-width: 220px;
-      max-width: 260px;
+      flex: 1;
     }
 
     .g-row {
@@ -446,19 +447,19 @@
     }
 
     #globalResetBtn {
-      align-self: flex-end;
-      background: #f0f0f0;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      padding: 2px 10px;
-      font-size: 10px;
-      color: #555;
+      background: #007BFF;
+      border: 1px solid #007BFF;
+      border-radius: 5px;
+      padding: 6px 14px;
+      font-size: 13px;
+      color: white;
       cursor: pointer;
       margin-left: 0;
-      margin-top: 1px;
+      flex-shrink: 0;
+      align-self: center;
     }
 
-    #globalResetBtn:hover { background: #e0e0e0; }
+    #globalResetBtn:hover { background: #0056b3; }
   </style>
 </head>
 <body>
@@ -471,15 +472,17 @@
       </form>
     </div>
     <div id="globalControls">
-      <div class="g-row">
-        <label>Brightness</label>
-        <input type="range" id="globalBrightness" min="-100" max="100" value="0" oninput="applyGlobal()">
-        <span id="globalBrightnessVal">0</span>
-      </div>
-      <div class="g-row">
-        <label>Contrast</label>
-        <input type="range" id="globalContrast" min="-100" max="100" value="0" oninput="applyGlobal()">
-        <span id="globalContrastVal">0</span>
+      <div id="globalSliders">
+        <div class="g-row">
+          <label>Brightness</label>
+          <input type="range" id="globalBrightness" min="-100" max="100" value="0" oninput="applyGlobal()">
+          <span id="globalBrightnessVal">0</span>
+        </div>
+        <div class="g-row">
+          <label>Contrast</label>
+          <input type="range" id="globalContrast" min="-100" max="100" value="0" oninput="applyGlobal()">
+          <span id="globalContrastVal">0</span>
+        </div>
       </div>
       <button id="globalResetBtn" onclick="resetGlobal()">Reset</button>
     </div>
@@ -491,7 +494,7 @@
   <!-- Image Editor Modal -->
   <div id="editorOverlay">
     <div id="editorModal">
-      <button id="editorCloseX" onclick="closeEditor()" title="Close">✕</button>
+      <button id="editorCloseX" onclick="closeEditor()" title="Close">&#x2715;</button>
       <h2 id="editorTitle">Edit Image</h2>
 
       <div id="editorBody">
@@ -533,8 +536,8 @@
           <div class="ctrl-section">
             <div class="ctrl-label">Rotate</div>
             <div class="icon-btn-row">
-              <button class="icon-btn" onclick="rotateImage(-90)" title="Rotate Left">↺</button>
-              <button class="icon-btn" onclick="rotateImage(90)"  title="Rotate Right">↻</button>
+              <button class="icon-btn" onclick="rotateImage(-90)" title="Rotate Left">&#x21BA;</button>
+              <button class="icon-btn" onclick="rotateImage(90)"  title="Rotate Right">&#x21BB;</button>
             </div>
           </div>
 
@@ -545,14 +548,14 @@
                 <div id="dialPointer"></div>
                 <div id="dialCenter"></div>
               </div>
-              <span id="dialAngleLabel">0°</span>
+              <span id="dialAngleLabel">0&deg;</span>
             </div>
           </div>
 
           <div class="ctrl-section">
             <div class="ctrl-label">Zoom</div>
             <div class="icon-btn-row">
-              <button class="icon-btn" onclick="zoomImage(-0.1)" title="Zoom Out">−</button>
+              <button class="icon-btn" onclick="zoomImage(-0.1)" title="Zoom Out">&#x2212;</button>
               <button class="icon-btn" onclick="zoomImage(0.1)"  title="Zoom In">+</button>
             </div>
           </div>
@@ -578,7 +581,7 @@
 
   <!-- Scroll to Top Button -->
   <div id="scrollTopWrapper" onclick="scrollToTop()">
-    <div class="scroll-icon">↑</div>
+    <div class="scroll-icon">&#x2191;</div>
     <div class="scroll-text">Back to Top</div>
   </div>
 
@@ -595,14 +598,12 @@
     let currentIndex = 0;
     let sentinelObserver = null;
 
-    // ── Lazy image loader ─────────────────────────────────────
     const lazyObserver = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (!entry.isIntersecting) return;
         const img = entry.target;
         if (img.src) return;
         img.src = img.dataset.src;
-        // Apply current global filter to newly loaded image
         const b = parseInt(document.getElementById("globalBrightness").value);
         const c = parseInt(document.getElementById("globalContrast").value);
         if (b !== 0 || c !== 0) {
@@ -653,7 +654,6 @@
       return container;
     }
 
-    // ── Global controls ───────────────────────────────────────
     function applyGlobal() {
       const b = parseInt(document.getElementById("globalBrightness").value);
       const c = parseInt(document.getElementById("globalContrast").value);
@@ -672,7 +672,6 @@
       document.querySelectorAll("#imageGallery img").forEach(img => { img.style.filter = ""; });
     }
 
-    // ── Editor ────────────────────────────────────────────────
     let currentRotation = 0;
     let currentZoom     = 1;
 
@@ -746,7 +745,6 @@
       if (btn) { btn.textContent = "Handles: Off"; btn.style.background = btn.style.color = btn.style.borderColor = ""; }
     }
 
-    // ── Resize handles ───────────────────────────────────────
     let resizing = false, resizeDir = "";
     let resizeStartX = 0, resizeStartY = 0, resizeStartW = 0, resizeStartH = 0;
     let resizePanStartX = 0, resizePanStartY = 0;
@@ -821,7 +819,6 @@
       btn.style.borderColor = handlesOn ? "#007BFF" : "";
     }
 
-    // ── Free Rotation Dial ───────────────────────────────────
     let dialAngle = 0, dialDragging = false, dialCenterX = 0, dialCenterY = 0;
 
     const dial        = document.getElementById("rotationDial");
@@ -861,7 +858,6 @@
     }, { passive: true });
     window.addEventListener("touchend", () => { dialDragging = false; });
 
-    // ── Pan ───────────────────────────────────────────────────
     let panX = 0, panY = 0, startX = 0, startY = 0, isDragging = false;
     let panRafId = null, pendingPanX = 0, pendingPanY = 0;
 
@@ -914,7 +910,6 @@
     document.getElementById("editorOverlay").addEventListener("click", function(e) { if (e.target === this) closeEditor(); });
     document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeEditor(); });
 
-    // ── Batch loader ──────────────────────────────────────────
     function loadNextBatch() {
       const gallery = document.getElementById("imageGallery");
       const oldSentinel = document.getElementById("sentinel");
@@ -949,7 +944,6 @@
       loadNextBatch();
     });
 
-    // ── Header ────────────────────────────────────────────────
     const header      = document.getElementById("siteHeader");
     const placeholder = document.getElementById("headerPlaceholder");
 

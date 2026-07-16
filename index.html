@@ -1,1172 +1,1242 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Image Viewer</title>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; }
-
-    html { overflow-x: hidden; }
-
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      background-color: #f4f4f4;
-      margin: 0;
-      padding: 10px;
-      min-height: 100vh;
-      max-width: 100vw;
-      overflow-x: hidden;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    h1 {
-      margin: 0.5em 0 0.2em;
-      font-size: 2em;
-      font-weight: 700;
-      color: #333;
-    }
-
-    .form-container {
-      background: white;
-      padding: 10px;
-      border-radius: 10px;
-      box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 20px;
-      width: 50%;
-      max-width: 620px;
-      min-width: 300px;
-    }
-
-    textarea {
-      flex: 1;
-      min-width: 0;
-      height: 50px;
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      font-size: 16px;
-      resize: none;
-      font-family: Arial, sans-serif;
-    }
-
-    button {
-      background-color: #007BFF;
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 5px;
-      font-size: 16px;
-      cursor: pointer;
-      margin-left: 0;
-      font-family: Arial, sans-serif;
-      white-space: nowrap;
-      flex-shrink: 0;
-    }
-
-    button:hover {
-      background-color: #0056b3;
-    }
-
-    /* Submit button matches video viewer's compact size */
-    .submit-btn { padding: 8px 16px; font-size: 14px; }
-
-    .image-container {
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
-      margin: 0 auto 20px auto;
-      width: 100%;
-      max-width: 600px;
-      word-wrap: break-word;
-      overflow-wrap: break-word;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    .image-number {
-      font-weight: bold;
-      font-size: 13px;
-      margin-bottom: 5px;
-      color: #333;
-      width: 100%;
-      text-align: center;
-    }
-
-    img {
-      max-width: 100%;
-      height: auto;
-      border-radius: 5px;
-      background: white;
-    }
-
-    .url-row {
-      display: flex;
-      align-items: center;
-      width: 100%;
-      margin-top: 8px;
-      gap: 5px;
-    }
-
-    .url-text {
-      font-size: 12px;
-      color: #555;
-      word-wrap: break-word;
-      overflow-wrap: break-word;
-      margin: 0;
-      flex: 1;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      text-align: left;
-    }
-
-    .copy-btn {
-      background: #007BFF;
-      border: 1px solid #007BFF;
-      border-radius: 4px;
-      padding: 4px 12px;
-      font-size: 12px;
-      cursor: pointer;
-      color: white;
-      transition: all 0.2s;
-      min-width: 60px;
-      height: 26px;
-      margin-left: 0;
-    }
-
-    .copy-btn:hover { background: #0056b3; border-color: #0056b3; }
-    .copy-btn:active { background: #004494; }
-
-    .edit-btn {
-      background: #f0f0f0;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      padding: 4px 12px;
-      font-size: 12px;
-      cursor: pointer;
-      color: #555;
-      transition: all 0.2s;
-      min-width: 60px;
-      height: 26px;
-      margin-left: 0;
-    }
-
-    .edit-btn:hover { background: #e0e0e0; }
-
-    /* Editor Modal */
-    #editorOverlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.7);
-      z-index: 1000;
-      align-items: center;
-      justify-content: center;
-    }
-
-    #editorOverlay.open { display: flex; }
-
-    #editorModal {
-      background: #fff;
-      border-radius: 12px;
-      padding: 20px;
-      position: relative;
-      width: 96vw;
-      max-width: 1200px;
-      height: 94vh;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.25);
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
-
-    @media (max-width: 600px) {
-      #editorModal { width: 100vw; height: 100vh; border-radius: 0; padding: 12px; }
-      #editorBody { flex-direction: column; }
-      #editorControls { width: 100%; flex-direction: row; flex-wrap: wrap; gap: 10px; }
-      .ctrl-section { flex: 1; min-width: 140px; }
-    }
-
-    #editorModal h2 { margin: 0; font-size: 15px; color: #333; }
-
-    #editorBody {
-      display: flex;
-      gap: 16px;
-      align-items: stretch;
-      flex: 1;
-      min-height: 0;
-    }
-
-    #editorImgWrap {
-      flex: 1;
-      min-width: 0;
-      min-height: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #eee;
-      border-radius: 6px;
-      overflow: hidden;
-      padding: 8px;
-    }
-
-    #resizeContainer {
-      position: relative;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      line-height: 0;
-      max-width: 100%;
-      max-height: 100%;
-      transform-origin: center center;
-      will-change: transform;
-    }
-
-    #editorImg {
-      display: block;
-      border-radius: 3px;
-      cursor: grab;
-      object-fit: fill;
-      will-change: width, height;
-    }
-
-    .rh {
-      position: absolute;
-      width: 7px;
-      height: 7px;
-      background: #007BFF;
-      border: 1px solid #fff;
-      border-radius: 1px;
-      box-shadow: 0 0 2px rgba(0,0,0,0.4);
-      z-index: 10;
-      opacity: 0;
-      transition: opacity 0.15s;
-      pointer-events: none;
-    }
-
-    #resizeContainer.handles-on .rh { opacity: 1; pointer-events: all; }
-
-    .rh-nw { top:0;    left:0;   transform: translate(-50%, -50%); cursor: nw-resize; }
-    .rh-n  { top:0;    left:50%; transform: translate(-50%, -50%); cursor: n-resize; }
-    .rh-ne { top:0;    right:0;  transform: translate(50%, -50%);  cursor: ne-resize; }
-    .rh-e  { top:50%;  right:0;  transform: translate(50%, -50%);  cursor: e-resize; }
-    .rh-se { bottom:0; right:0;  transform: translate(50%, 50%);   cursor: se-resize; }
-    .rh-s  { bottom:0; left:50%; transform: translate(-50%, 50%);  cursor: s-resize; }
-    .rh-sw { bottom:0; left:0;   transform: translate(-50%, 50%);  cursor: sw-resize; }
-    .rh-w  { top:50%;  left:0;   transform: translate(-50%, -50%); cursor: w-resize; }
-
-    #resizeLabel {
-      position: absolute;
-      bottom: -22px;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 11px;
-      color: #666;
-      white-space: nowrap;
-      font-family: monospace;
-      pointer-events: none;
-    }
-
-    #editorControls {
-      width: 170px;
-      flex-shrink: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 18px;
-      align-self: stretch;
-    }
-
-    #editorControls .ctrl-spacer { flex: 1; }
-
-    .ctrl-section { display: flex; flex-direction: column; gap: 8px; padding-top: 4px; }
-
-    .ctrl-label {
-      font-size: 11px;
-      font-weight: bold;
-      color: #888;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    .slider-row { display: flex; flex-direction: column; gap: 5px; margin-bottom: 8px; }
-    .slider-row-header { display: flex; justify-content: space-between; align-items: center; }
-    .slider-row-header label { font-size: 13px; color: #333; font-weight: bold; }
-    .slider-row-header span { font-size: 11px; color: #666; min-width: 28px; text-align: right; }
-
-    .slider-row input[type=range] {
-      width: 100%; height: 4px; accent-color: #007BFF; cursor: pointer;
-      border: none; padding: 0; border-radius: 0; font-size: unset;
-      background: none; box-shadow: none; margin-left: 0;
-    }
-
-    .rotation-dial-wrap { display: flex; flex-direction: column; align-items: center; gap: 6px; }
-
-    #rotationDial {
-      width: 80px; height: 80px; border-radius: 50%;
-      background: #f5f5f5; border: 2px solid #ddd;
-      position: relative; cursor: grab; touch-action: none;
-      user-select: none; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
-    }
-
-    #rotationDial:active { cursor: grabbing; }
-
-    #rotationDial::before {
-      content: ''; position: absolute; inset: 8px;
-      border-radius: 50%; border: 1px dashed #ccc;
-    }
-
-    #dialPointer {
-      position: absolute; width: 2px; height: 22px;
-      background: #007BFF; border-radius: 2px 2px 0 0;
-      left: 50%; top: 8px; transform-origin: center 32px;
-      transform: translateX(-50%);
-    }
-
-    #dialCenter {
-      position: absolute; width: 8px; height: 8px;
-      background: #007BFF; border: 2px solid #fff; border-radius: 50%;
-      top: 50%; left: 50%; transform: translate(-50%, -50%);
-      z-index: 2; pointer-events: none; box-shadow: 0 0 3px rgba(0,0,0,0.2);
-    }
-
-    #dialAngleLabel { font-family: monospace; font-size: 11px; color: #666; text-align: center; }
-
-    .icon-btn-row { display: flex; gap: 8px; justify-content: center; }
-
-    .icon-btn {
-      width: 36px; height: 36px; border-radius: 6px; border: 1px solid #ddd;
-      background: #f5f5f5; color: #333; font-size: 18px; font-weight: bold;
-      cursor: pointer; display: flex; align-items: center; justify-content: center;
-      transition: all 0.15s; margin-left: 0; padding: 0;
-    }
-
-    .icon-btn:hover { background: #e0e0e0; border-color: #bbb; }
-
-    .editor-actions { display: flex; gap: 8px; justify-content: center; flex-direction: column; }
-    .editor-actions button { font-size: 13px; padding: 7px 0; margin-left: 0; width: 100%; }
-
-    #resetBtn { background: #f0f0f0; color: #555; border: 1px solid #ddd; }
-    #resetBtn:hover { background: #e0e0e0; }
-    #closeEditorBtn { background: #dc3545; }
-    #closeEditorBtn:hover { background: #b02a37; }
-
-    #editorCloseX {
-      position: absolute; top: 12px; right: 12px; width: 28px; height: 28px;
-      border-radius: 50%; background: #dc3545; color: white; border: none;
-      font-size: 14px; font-weight: bold; cursor: pointer; display: flex;
-      align-items: center; justify-content: center; line-height: 1;
-      padding: 0; margin: 0; transition: background 0.2s; z-index: 10;
-    }
-
-    #editorCloseX:hover { background: #b02a37; }
-
-    /* ── Back to Top ── */
-    #scrollTopWrapper {
-      position: fixed; bottom: 20px; right: 20px; z-index: 999;
-      display: none; flex-direction: column; align-items: center;
-      cursor: pointer; text-align: center; animation: fadeIn 0.3s ease-in-out;
-    }
-
-    .scroll-icon {
-      background-color: #00aaff; color: white; font-size: 24px; font-weight: 900;
-      font-family: monospace; border-radius: 50%; width: 40px; height: 40px;
-      line-height: 40px; text-align: center; box-shadow: 0px 3px 7px rgba(0,0,0,0.2);
-      transition: all 0.3s ease;
-    }
-
-    .scroll-icon:hover { background-color: #0077cc; box-shadow: 0 4px 10px rgba(0,0,0,0.3); transform: scale(1.05); }
-    .scroll-text { margin-top: 4px; font-size: 10px; color: #007BFF; font-weight: bold; text-transform: uppercase; }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    /* ── Fixed shrinking header ── */
-    #siteHeader {
-      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-      background-color: #f4f4f4; display: flex; flex-direction: column;
-      align-items: center; padding: 10px;
-      transition: padding 0.3s ease, box-shadow 0.3s ease; box-shadow: none;
-    }
-
-    #siteHeader.shrunk {
-      flex-direction: row; justify-content: center; align-items: center;
-      gap: 12px; padding: 6px 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-    }
-
-    #siteHeader h1 { margin: 0.67em 0; color: #333; transition: font-size 0.3s ease, margin 0.3s ease; }
-    #siteHeader.shrunk h1 { font-size: 16px; white-space: nowrap; margin: 0; }
-    #siteHeader .form-container { transition: width 0.3s ease, max-width 0.3s ease, padding 0.3s ease; }
-    #siteHeader textarea { height: 50px; font-size: 16px; transition: height 0.3s ease, font-size 0.3s ease, padding 0.3s ease; }
-    #siteHeader.shrunk .form-container { width: auto; flex: 1; max-width: 620px; padding: 5px 8px; }
-    #siteHeader.shrunk textarea { height: 32px; font-size: 13px; padding: 5px 8px; }
-    #siteHeader.shrunk .submit-btn { padding: 5px 12px; font-size: 13px; }
-
-    #headerPlaceholder { width: 100%; flex-shrink: 0; }
-
-    /* ── View Toggle (same style as video viewer) ── */
-    .view-toggle {
-      display: flex; align-items: center;
-      gap: 3px; background: #e8e8e8;
-      border-radius: 8px; padding: 3px;
-      flex-shrink: 0;
-    }
-
-    .view-btn {
-      padding: 5px 9px; background: transparent; color: #888;
-      border-radius: 5px; border: none; margin-left: 0;
-      display: flex; align-items: center; justify-content: center;
-      cursor: pointer; transition: background 0.15s, color 0.15s;
-      box-shadow: none;
-    }
-
-    .view-btn:hover { background: #d8d8d8; }
-    .view-btn.active { background: #007BFF; color: #fff; }
-    .view-btn svg { width: 16px; height: 16px; fill: currentColor; }
-
-    body.dark .view-toggle { background: #333; }
-    body.dark .view-btn:hover { background: #444; }
-
-    /* ── Gallery grid / list modes ── */
-    #imageGallery.list-view { display: block; }
-
-    #imageGallery.grid-view {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 16px;
-      width: 100%;
-      padding: 0 4px;
-      box-sizing: border-box;
-    }
-
-    #imageGallery.grid-view .image-container {
-      max-width: none;
-      margin: 0;
-      min-width: 0;
-    }
-
-    @media (max-width: 600px) {
-      #imageGallery.grid-view { grid-template-columns: 1fr; }
-    }
-
-    /* ── Dark mode ── */
-    body.dark {
-      background-color: #1a1a1a;
-      color: #f0f0f0;
-    }
-
-    body.dark h1 { color: #f0f0f0; }
-
-    body.dark #siteHeader h1 { color: #f0f0f0; }
-    body.dark #siteHeader.shrunk h1 { color: #f0f0f0; }
-
-    body.dark #siteHeader { background-color: #1a1a1a; box-shadow: none; }
-    body.dark #siteHeader.shrunk { box-shadow: 0 2px 8px rgba(0,0,0,0.5); }
-
-    body.dark .form-container {
-      background: #2a2a2a;
-      box-shadow: 0px 0px 10px rgba(0,0,0,0.4);
-    }
-
-    body.dark textarea {
-      background: #333;
-      border-color: #444;
-      color: #f0f0f0;
-    }
-
-    body.dark .image-container {
-      background: #2a2a2a;
-      box-shadow: 0px 0px 10px rgba(0,0,0,0.4);
-    }
-
-    body.dark .image-number { color: #ccc; }
-
-    body.dark img { background: #333; }
-
-    body.dark .url-text { color: #aaa; }
-
-    body.dark .edit-btn {
-      background: #333;
-      border-color: #444;
-      color: #ccc;
-    }
-
-    body.dark .edit-btn:hover { background: #444; }
-
-    body.dark hr { border-color: #333; }
-
-    body.dark #editorModal { background: #2a2a2a; }
-    body.dark #editorModal h2 { color: #f0f0f0; }
-    body.dark #editorImgWrap { background: #1a1a1a; }
-    body.dark #editorControls .ctrl-label { color: #aaa; }
-    body.dark .slider-row-header label { color: #ddd; }
-    body.dark .slider-row-header span { color: #aaa; }
-    body.dark .icon-btn { background: #333; border-color: #444; color: #ddd; }
-    body.dark .icon-btn:hover { background: #444; }
-    body.dark #rotationDial { background: #333; border-color: #444; }
-    body.dark #resetBtn { background: #333; color: #ccc; border-color: #444; }
-    body.dark #resetBtn:hover { background: #444; }
-    body.dark #dialAngleLabel { color: #aaa; }
-
-    /* ── Theme toggle ── */
-    #themeToggle {
-      position: fixed;
-      top: 12px;
-      right: 16px;
-      z-index: 200;
-      width: 36px;
-      height: 36px;
-      border-radius: 10px;
-      border: 1px solid #e0e0e0;
-      background: #ffffff;
-      cursor: pointer;
-      font-size: 17px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06);
-      transition: background 0.2s, box-shadow 0.2s, transform 0.15s;
-      margin-left: 0;
-      padding: 0;
-    }
-
-    #themeToggle:hover {
-      background: #f5f5f5;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.12), 0 4px 16px rgba(0,0,0,0.08);
-      transform: translateY(-1px);
-    }
-
-    #themeToggle:active { transform: translateY(0); }
-
-    body.dark #themeToggle {
-      background: #242424;
-      border-color: #383838;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.3), 0 2px 8px rgba(0,0,0,0.2);
-    }
-
-    body.dark #themeToggle:hover {
-      background: #2e2e2e;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.4), 0 4px 16px rgba(0,0,0,0.3);
-    }
-
-    /* ── Global image controls ── */
-    #globalControls {
-      display: none;
-      flex-direction: row;
-      align-items: center;
-      gap: 10px;
-      flex-shrink: 0;
-      min-width: 260px;
-      max-width: 320px;
-    }
-
-    #globalSliders {
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-      flex: 1;
-    }
-
-    .g-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .g-row label {
-      font-size: 11px;
-      font-weight: bold;
-      color: #555;
-      width: 65px;
-      flex-shrink: 0;
-      text-align: right;
-    }
-
-    .g-row input[type=range] {
-      flex: 1;
-      height: 4px;
-      accent-color: #007BFF;
-      cursor: pointer;
-      border: none;
-      padding: 0;
-      background: none;
-      margin-left: 0;
-    }
-
-    .g-row span {
-      font-size: 11px;
-      color: #666;
-      width: 24px;
-      text-align: right;
-      font-family: monospace;
-      flex-shrink: 0;
-    }
-
-    #globalResetBtn {
-      background: #007BFF;
-      border: 1px solid #007BFF;
-      border-radius: 5px;
-      padding: 6px 14px;
-      font-size: 13px;
-      color: white;
-      cursor: pointer;
-      margin-left: 0;
-      flex-shrink: 0;
-      align-self: center;
-    }
-
-    #globalResetBtn:hover { background: #0056b3; }
-
-    body.dark .g-row label { color: #aaa; }
-    body.dark .g-row span  { color: #aaa; }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="description" content="Unified Media Player — open image and video URLs seamlessly in one app."/>
+<title>Media Player</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; }
+html { overflow-x: hidden; }
+body {
+font-family: Arial, sans-serif;
+background: #f4f4f4;
+color: #333;
+margin: 0;
+padding: 0;
+min-height: 100vh;
+max-width: 100vw;
+overflow-x: hidden;
+transition: background 0.25s, color 0.25s;
+display: flex;
+flex-direction: column;
+align-items: center;
+}
+#siteHeader {
+position: fixed;
+top: 0; left: 0; right: 0;
+z-index: 100;
+background: #f4f4f4;
+display: flex;
+flex-direction: column;
+align-items: center;
+padding: 10px;
+transition: padding 0.3s ease, box-shadow 0.3s ease;
+box-shadow: none;
+}
+#siteHeader::before { content: ''; display: none; }
+#siteHeader.shrunk {
+flex-direction: row;
+justify-content: space-between;
+align-items: center;
+gap: 6px;
+padding: 6px 50px 6px 12px;
+box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+flex-wrap: wrap;
+}
+#siteHeader.shrunk::before { display: none; }
+#siteHeader.shrunk h1 {
+order: 1;
+flex: 0 0 auto;
+text-align: left;
+font-size: 15px;
+white-space: normal;
+word-break: break-word;
+max-width: 60px;
+margin: 0;
+line-height: 1.2;
+}
+#siteHeader.shrunk #headerInner {
+order: 2;
+flex: 1 1 0;
+min-width: 0;
+display: flex;
+flex-direction: row;
+align-items: center;
+gap: 6px;
+flex-wrap: nowrap;
+overflow-x: auto;
+}
+#headerInner {
+display: flex;
+flex-direction: row;
+align-items: center;
+gap: 8px;
+width: 100%;
+justify-content: center;
+flex-wrap: wrap;
+}
+#siteHeader h1 {
+margin: 0.5em 0 0.2em;
+font-size: 2em;
+font-weight: 700;
+color: #333;
+transition: font-size 0.3s ease, margin 0.3s ease;
+}
+.form-container {
+background: white;
+padding: 10px;
+border-radius: 10px;
+box-shadow: 0 0 10px rgba(0,0,0,0.1);
+display: flex;
+align-items: center;
+gap: 10px;
+width: 75%;
+max-width: 900px;
+min-width: 200px;
+transition: padding 0.3s, width 0.3s, max-width 0.3s;
+}
+#siteHeader.shrunk .form-container { flex: 1 1 200px; min-width: 0; max-width: 600px; padding: 5px 8px; width: auto; }
+textarea {
+flex: 1; min-width: 0; height: 50px; padding: 10px;
+border: 1px solid #ccc; border-radius: 5px; font-size: 16px; resize: none;
+font-family: Arial, sans-serif; transition: height 0.3s, font-size 0.3s, padding 0.3s;
+background: #fff; color: #333;
+}
+#siteHeader.shrunk textarea { height: 32px; font-size: 13px; padding: 5px 8px; }
+button {
+background: #007BFF; color: white; border: none; padding: 10px 20px;
+border-radius: 5px; font-size: 16px; cursor: pointer; margin-left: 0;
+font-family: Arial, sans-serif; white-space: nowrap; flex-shrink: 0; transition: background 0.2s;
+}
+button:hover { background: #0056b3; }
+.submit-btn { padding: 8px 16px; font-size: 14px; }
+#siteHeader.shrunk .submit-btn { padding: 5px 10px; font-size: 12px; }
+#filterTabs { display: none; align-items: center; flex-shrink: 0; }
+#filterSelect {
+background: #e8e8e8; color: #333; border: none; border-radius: 8px;
+padding: 6px 4px; font-size: 12px; font-weight: 600; cursor: pointer;
+font-family: Arial, sans-serif; margin-left: 0; max-width: 80px; width: 80px;
+}
+#siteHeader.shrunk #filterSelect { font-size: 11px; padding: 4px 3px; max-width: 75px; width: 75px; }
+#filterSelect:hover { background: #d8d8d8; }
+#filterSelect:focus { outline: 2px solid #007BFF; outline-offset: 1px; }
+@media (max-width: 900px) {
+#filterSelect { font-size: 11px; padding: 4px 3px; max-width: 70px; width: 70px; }
+#siteHeader.shrunk #filterSelect { font-size: 10px; padding: 3px 2px; max-width: 60px; width: 60px; }
+#siteHeader.shrunk .view-toggle { padding: 2px; gap: 2px; }
+#siteHeader.shrunk .view-btn { padding: 3px 6px; }
+#siteHeader.shrunk .view-btn svg { width: 13px; height: 13px; }
+#siteHeader.shrunk #muteBtn,
+#siteHeader.shrunk #loopBtn { width: 26px; height: 26px; }
+#siteHeader.shrunk #muteBtn svg,
+#siteHeader.shrunk #loopBtn svg { width: 12px; height: 12px; }
+#siteHeader.shrunk .submit-btn { padding: 4px 7px; font-size: 11px; }
+}
+.view-toggle { display: flex; align-items: center; gap: 3px; background: #e8e8e8; border-radius: 8px; padding: 3px; flex-shrink: 0; }
+.view-btn { padding: 5px 9px; background: transparent; color: #888; border-radius: 5px; border: none; margin-left: 0; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.15s, color 0.15s; }
+.view-btn:hover { background: #d8d8d8; }
+.view-btn.active { background: #007BFF; color: #fff; }
+.view-btn svg { width: 16px; height: 16px; fill: currentColor; }
+#speedWrapper { display: none; flex-direction: column; align-items: center; gap: 3px; flex-shrink: 0; }
+#speedValue { font-weight: 600; font-size: 11px; text-align: center; color: #555; font-family: monospace; line-height: 1; }
+#speedControl { width: 70px; height: 4px; accent-color: #007BFF; cursor: pointer; border: none; padding: 0; background: none; margin-left: 0; }
+#muteBtn, #loopBtn { display: none; width: 32px; height: 32px; padding: 0; align-items: center; justify-content: center; background: #e8e8e8; color: #555; border-radius: 6px; font-size: 12px; font-weight: 600; border: 1px solid #ddd; cursor: pointer; transition: background 0.15s, color 0.15s; margin-left: 0; flex-shrink: 0; }
+#muteBtn:hover, #loopBtn:hover { background: #ddd; }
+#muteBtn.muted   { background: #dc3545; color: #fff; border-color: #dc3545; }
+#loopBtn.looping { background: #28a745; color: #fff; border-color: #28a745; }
+#muteBtn svg, #loopBtn svg { width: 15px; height: 15px; fill: currentColor; flex-shrink: 0; }
+#globalControls { display: none; flex-direction: row; align-items: center; gap: 8px; flex-shrink: 0; }
+#globalSliders { display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 120px; }
+.g-row { display: flex; align-items: center; gap: 6px; }
+.g-row label { font-size: 10px; font-weight: bold; color: #555; width: 55px; flex-shrink: 0; text-align: right; }
+.g-row input[type=range] { flex: 1; height: 4px; accent-color: #007BFF; cursor: pointer; border: none; padding: 0; background: none; margin-left: 0; min-width: 60px; }
+.g-row span { font-size: 10px; color: #666; width: 20px; text-align: right; font-family: monospace; flex-shrink: 0; }
+#globalResetBtn { background: #007BFF; border: 1px solid #007BFF; border-radius: 5px; padding: 5px 10px; font-size: 12px; color: white; cursor: pointer; margin-left: 0; flex-shrink: 0; align-self: center; white-space: nowrap; }
+#globalResetBtn:hover { background: #0056b3; }
+#headerPlaceholder { width: 100%; flex-shrink: 0; }
+#mediaGallery { width: 100%; max-width: 900px; padding: 16px 10px 40px; }
+#mediaGallery.list-view { display: block; }
+#mediaGallery.grid-view {
+display: grid;
+grid-template-columns: repeat(2, 1fr);
+gap: 14px;
+max-width: 100%;
+width: 100%;
+padding: 16px 16px 40px;
+box-sizing: border-box;
+}
+#mediaGallery.grid-view.cols-3 { grid-template-columns: repeat(3, 1fr); }
+#mediaGallery.grid-view.cols-4 { grid-template-columns: repeat(4, 1fr); }
+@media (max-width: 520px) {
+#mediaGallery.grid-view,
+#mediaGallery.grid-view.cols-3,
+#mediaGallery.grid-view.cols-4 { grid-template-columns: 1fr; }
+}
+@media (min-width: 521px) and (max-width: 900px) {
+#mediaGallery.grid-view.cols-3,
+#mediaGallery.grid-view.cols-4 { grid-template-columns: repeat(2, 1fr); }
+}
+#mediaGallery.grid-view .media-card {
+max-width: none;
+margin: 0;
+min-width: 0;
+width: 100%;
+padding: 10px 10px 8px;
+overflow: hidden;
+display: flex;
+flex-direction: column;
+}
+#mediaGallery.grid-view .media-card img {
+width: 100%;
+height: 65vh;
+object-fit: contain;
+border-radius: 5px;
+display: block;
+}
+#mediaGallery.grid-view .media-card video {
+width: 100%;
+height: 65vh;
+object-fit: contain;
+border-radius: 5px;
+display: block;
+}
+#mediaGallery.grid-view.cols-3 .media-card img,
+#mediaGallery.grid-view.cols-3 .media-card video { height: 38vh; }
+#mediaGallery.grid-view.cols-4 .media-card img,
+#mediaGallery.grid-view.cols-4 .media-card video { height: 30vh; }
+#mediaGallery.grid-view .media-label {
+font-size: 12px;
+padding-right: 0;
+text-align: center;
+white-space: nowrap;
+overflow: hidden;
+text-overflow: ellipsis;
+flex-shrink: 0;
+}
+#mediaGallery.grid-view .url-row {
+flex-wrap: nowrap;
+flex-shrink: 0;
+}
+#mediaGallery.grid-view .url-text {
+flex: 1 1 auto;
+min-width: 0;
+font-size: 10px;
+white-space: nowrap;
+overflow: hidden;
+text-overflow: ellipsis;
+margin-bottom: 0;
+}
+#mediaGallery.grid-view .edit-btn,
+#mediaGallery.grid-view .copy-btn {
+font-size: 11px;
+padding: 3px 8px;
+min-width: 0;
+flex: 0 0 auto;
+}
+.media-card {
+background: white; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1);
+margin: 0 auto 20px auto; width: 100%; max-width: 900px;
+display: flex; flex-direction: column; align-items: center;
+padding: 16px 16px 12px; position: relative;
+border-left: 4px solid transparent; transition: box-shadow 0.2s; overflow: hidden;
+}
+.media-card:hover { box-shadow: 0 4px 18px rgba(0,0,0,0.16); }
+.media-card.type-image { border-left-color: #2979FF; }
+.media-card.type-video { border-left-color: #e05a00; }
+.media-card.type-unknown { border-left-color: #999; }
+.type-badge {
+position: absolute; top: 10px; right: 10px;
+display: flex; align-items: center; gap: 4px;
+padding: 3px 9px; border-radius: 20px;
+font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+pointer-events: none; user-select: none;
+}
+.type-badge.badge-image   { background: rgba(41,121,255,0.1);  color: #1a5fd4; border: 1px solid rgba(41,121,255,0.3); }
+.type-badge.badge-video   { background: rgba(224,90,0,0.1);    color: #b34700; border: 1px solid rgba(224,90,0,0.3); }
+.type-badge.badge-unknown { background: rgba(100,100,100,0.1); color: #555;    border: 1px solid rgba(100,100,100,0.3); }
+.media-placeholder {
+width: 100%; min-height: 60px; display: flex; align-items: center;
+justify-content: center; font-size: 12px; color: #888; font-style: italic;
+border-radius: 5px; background: #f9f9f9;
+}
+.media-label { font-weight: bold; font-size: 13px; margin-bottom: 8px; color: #333; width: 100%; text-align: center; padding-right: 0; }
+.media-card img { max-width: 100%; height: auto; border-radius: 5px; }
+.media-card video { width: 100%; max-height: 500px; border-radius: 5px; }
+#mediaGallery.grid-view .media-card video { max-height: none; }
+.url-row { display: flex; align-items: center; width: 100%; margin-top: 8px; gap: 5px; }
+.url-text { font-size: 12px; color: #555; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: left; }
+.copy-btn { background: #007BFF; border: 1px solid #007BFF; border-radius: 4px; padding: 4px 12px; font-size: 12px; cursor: pointer; color: white; min-width: 60px; height: 26px; margin-left: 0; transition: background 0.2s; }
+.copy-btn:hover { background: #0056b3; border-color: #0056b3; }
+.edit-btn { background: #f0f0f0; border: 1px solid #ddd; border-radius: 4px; padding: 4px 12px; font-size: 12px; cursor: pointer; color: #555; min-width: 60px; height: 26px; margin-left: 0; transition: background 0.2s; }
+.edit-btn:hover { background: #e0e0e0; }
+#editorOverlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center; }
+#editorOverlay.open { display: flex; }
+#editorModal { background: #fff; border-radius: 12px; padding: 20px; position: relative; width: 96vw; max-width: 1200px; height: 94vh; box-shadow: 0 8px 32px rgba(0,0,0,0.25); display: flex; flex-direction: column; gap: 14px; }
+@media (max-width: 600px) {
+#editorModal { width: 100vw; height: 100vh; border-radius: 0; padding: 12px; }
+#editorBody { flex-direction: column; }
+#editorControls { width: 100%; flex-direction: row; flex-wrap: wrap; gap: 10px; }
+.ctrl-section { flex: 1; min-width: 140px; }
+}
+#editorModal h2 { margin: 0; font-size: 15px; color: #333; }
+#editorBody { display: flex; gap: 16px; align-items: stretch; flex: 1; min-height: 0; }
+#editorImgWrap { flex: 1; min-width: 0; min-height: 0; display: flex; align-items: center; justify-content: center; background: #eee; border-radius: 6px; overflow: hidden; padding: 8px; }
+#resizeContainer { position: relative; display: inline-flex; align-items: center; justify-content: center; line-height: 0; max-width: 100%; max-height: 100%; transform-origin: center center; will-change: transform; }
+#editorImg { display: block; border-radius: 3px; cursor: grab; object-fit: fill; will-change: width, height; }
+.rh { position: absolute; width: 7px; height: 7px; background: #007BFF; border: 1px solid #fff; border-radius: 1px; box-shadow: 0 0 2px rgba(0,0,0,0.4); z-index: 10; opacity: 0; transition: opacity 0.15s; pointer-events: none; }
+#resizeContainer.handles-on .rh { opacity: 1; pointer-events: all; }
+.rh-nw { top:0;    left:0;   transform: translate(-50%,-50%); cursor: nw-resize; }
+.rh-n  { top:0;    left:50%; transform: translate(-50%,-50%); cursor: n-resize; }
+.rh-ne { top:0;    right:0;  transform: translate(50%,-50%);  cursor: ne-resize; }
+.rh-e  { top:50%;  right:0;  transform: translate(50%,-50%);  cursor: e-resize; }
+.rh-se { bottom:0; right:0;  transform: translate(50%,50%);   cursor: se-resize; }
+.rh-s  { bottom:0; left:50%; transform: translate(-50%,50%);  cursor: s-resize; }
+.rh-sw { bottom:0; left:0;   transform: translate(-50%,50%);  cursor: sw-resize; }
+.rh-w  { top:50%;  left:0;   transform: translate(-50%,-50%); cursor: w-resize; }
+#resizeLabel { position: absolute; bottom: -22px; left: 50%; transform: translateX(-50%); font-size: 11px; color: #666; white-space: nowrap; font-family: monospace; pointer-events: none; }
+#editorControls { width: 170px; flex-shrink: 0; display: flex; flex-direction: column; gap: 18px; align-self: stretch; }
+#editorControls .ctrl-spacer { flex: 1; }
+.ctrl-section { display: flex; flex-direction: column; gap: 8px; padding-top: 4px; }
+.ctrl-label { font-size: 11px; font-weight: bold; color: #888; text-transform: uppercase; letter-spacing: 0.05em; }
+.slider-row { display: flex; flex-direction: column; gap: 5px; margin-bottom: 8px; }
+.slider-row-header { display: flex; justify-content: space-between; align-items: center; }
+.slider-row-header label { font-size: 13px; color: #333; font-weight: bold; }
+.slider-row-header span { font-size: 11px; color: #666; min-width: 28px; text-align: right; }
+.slider-row input[type=range] { width: 100%; height: 4px; accent-color: #007BFF; cursor: pointer; border: none; padding: 0; border-radius: 0; font-size: unset; background: none; box-shadow: none; margin-left: 0; }
+.rotation-dial-wrap { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+#rotationDial { width: 80px; height: 80px; border-radius: 50%; background: #f5f5f5; border: 2px solid #ddd; position: relative; cursor: grab; touch-action: none; user-select: none; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1); }
+#rotationDial:active { cursor: grabbing; }
+#rotationDial::before { content: ''; position: absolute; inset: 8px; border-radius: 50%; border: 1px dashed #ccc; }
+#dialPointer { position: absolute; width: 2px; height: 22px; background: #007BFF; border-radius: 2px 2px 0 0; left: 50%; top: 8px; transform-origin: center 32px; transform: translateX(-50%); }
+#dialCenter { position: absolute; width: 8px; height: 8px; background: #007BFF; border: 2px solid #fff; border-radius: 50%; top: 50%; left: 50%; transform: translate(-50%,-50%); z-index: 2; pointer-events: none; box-shadow: 0 0 3px rgba(0,0,0,0.2); }
+#dialAngleLabel { font-family: monospace; font-size: 11px; color: #666; text-align: center; }
+.icon-btn-row { display: flex; gap: 8px; justify-content: center; }
+.icon-btn { width: 36px; height: 36px; border-radius: 6px; border: 1px solid #ddd; background: #f5f5f5; color: #333; font-size: 18px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; margin-left: 0; padding: 0; }
+.icon-btn:hover { background: #e0e0e0; border-color: #bbb; }
+.editor-actions { display: flex; gap: 8px; justify-content: center; flex-direction: column; }
+.editor-actions button { font-size: 13px; padding: 7px 0; margin-left: 0; width: 100%; }
+#resetBtn { background: #f0f0f0; color: #555; border: 1px solid #ddd; }
+#resetBtn:hover { background: #e0e0e0; }
+#closeEditorBtn { background: #dc3545; }
+#closeEditorBtn:hover { background: #b02a37; }
+#editorCloseX { position: absolute; top: 12px; right: 12px; width: 28px; height: 28px; border-radius: 50%; background: #dc3545; color: white; border: none; font-size: 14px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1; padding: 0; margin: 0; transition: background 0.2s; z-index: 10; }
+#editorCloseX:hover { background: #b02a37; }
+#scrollTopWrapper { position: fixed; bottom: 20px; right: 20px; z-index: 999; display: none; flex-direction: column; align-items: center; cursor: pointer; text-align: center; animation: fadeIn 0.3s ease-in-out; }
+.scroll-icon { background-color: #00aaff; color: white; font-size: 24px; font-weight: 900; font-family: monospace; border-radius: 50%; width: 40px; height: 40px; line-height: 40px; text-align: center; box-shadow: 0 3px 7px rgba(0,0,0,0.2); transition: all 0.3s ease; }
+.scroll-icon:hover { background-color: #0077cc; transform: scale(1.05); }
+.scroll-text { margin-top: 4px; font-size: 10px; color: #007BFF; font-weight: bold; text-transform: uppercase; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+#themeToggle { position: fixed; top: 12px; right: 16px; z-index: 200; width: 36px; height: 36px; border-radius: 10px; border: 1px solid #e0e0e0; background: #ffffff; cursor: pointer; font-size: 17px; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 4px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06); transition: background 0.2s, box-shadow 0.2s, transform 0.15s; margin-left: 0; padding: 0; }
+#themeToggle:hover { background: #f5f5f5; box-shadow: 0 2px 8px rgba(0,0,0,0.12), 0 4px 16px rgba(0,0,0,0.08); transform: translateY(-1px); }
+#themeToggle:active { transform: translateY(0); }
+body.dark { background: #1a1a1a; color: #f0f0f0; }
+body.dark h1 { color: #f0f0f0; }
+body.dark #siteHeader { background: #1a1a1a; }
+body.dark #siteHeader.shrunk { box-shadow: 0 2px 8px rgba(0,0,0,0.5); }
+body.dark #siteHeader h1 { color: #f0f0f0; }
+body.dark .form-container { background: #2a2a2a; box-shadow: 0 0 10px rgba(0,0,0,0.4); }
+body.dark textarea { background: #333; border-color: #444; color: #f0f0f0; }
+body.dark .media-card { background: #2a2a2a; box-shadow: 0 0 10px rgba(0,0,0,0.4); }
+body.dark .media-label { color: #ccc; }
+body.dark .url-text { color: #aaa; }
+body.dark .view-toggle { background: #333; }
+body.dark .view-btn:hover { background: #444; }
+body.dark #filterSelect { background: #333; color: #ccc; }
+body.dark #filterSelect:hover { background: #444; }
+body.dark #muteBtn, body.dark #loopBtn { background: #333; color: #ccc; border-color: #444; }
+body.dark #muteBtn:hover, body.dark #loopBtn:hover { background: #444; }
+body.dark #muteBtn.muted   { background: #dc3545; color: #fff; border-color: #dc3545; }
+body.dark #loopBtn.looping { background: #28a745; color: #fff; border-color: #28a745; }
+body.dark #speedValue { color: #aaa; }
+body.dark .g-row label { color: #aaa; }
+body.dark .g-row span  { color: #aaa; }
+body.dark #themeToggle { background: #242424; border-color: #383838; box-shadow: 0 1px 4px rgba(0,0,0,0.3); }
+body.dark #themeToggle:hover { background: #2e2e2e; box-shadow: 0 2px 8px rgba(0,0,0,0.4); }
+body.dark .edit-btn { background: #333; border-color: #444; color: #ccc; }
+body.dark .edit-btn:hover { background: #444; }
+body.dark hr { border-color: #333; }
+body.dark .type-badge.badge-image { background: rgba(41,121,255,0.18); color: #6da8ff; border-color: rgba(41,121,255,0.4); }
+body.dark .type-badge.badge-video { background: rgba(224,90,0,0.18); color: #ff9a4d; border-color: rgba(224,90,0,0.4); }
+body.dark .type-badge.badge-unknown { background: rgba(100,100,100,0.18); color: #bbb; border-color: rgba(100,100,100,0.4); }
+body.dark .media-placeholder { background: #333; color: #777; }
+body.dark #editorModal { background: #2a2a2a; }
+body.dark #editorModal h2 { color: #f0f0f0; }
+body.dark #editorImgWrap { background: #1a1a1a; }
+body.dark #editorControls .ctrl-label { color: #aaa; }
+body.dark .slider-row-header label { color: #ddd; }
+body.dark .slider-row-header span { color: #aaa; }
+body.dark .icon-btn { background: #333; border-color: #444; color: #ddd; }
+body.dark .icon-btn:hover { background: #444; }
+body.dark #rotationDial { background: #333; border-color: #444; }
+body.dark #resetBtn { background: #333; color: #ccc; border-color: #444; }
+body.dark #resetBtn:hover { background: #444; }
+body.dark #dialAngleLabel { color: #aaa; }
+body.dark #resizeLabel { color: #aaa; }
+@media (max-width: 900px) {
+#siteHeader.shrunk { flex-wrap: wrap; justify-content: center; padding: 6px 10px; }
+#siteHeader.shrunk h1 { display: none; }
+#siteHeader.shrunk::before { display: none; }
+.form-container { width: 100%; max-width: none; }
+}
+</style>
 </head>
 <body>
-  <button id="themeToggle" onclick="toggleTheme()" title="Toggle dark/light mode">🌙</button>
-
-  <div id="siteHeader">
-    <h1>Image Viewer</h1>
-    <div style="display:flex; flex-direction:row; align-items:center; gap:12px; width:100%; justify-content:center;">
-    <div class="form-container">
-      <form id="imageForm" style="display: flex; width: 100%; align-items: center; gap: 20px;">
-        <textarea id="urls" placeholder="Paste image URLs (one per line)"></textarea>
-        <button type="submit" class="submit-btn">Load Images</button>
-      </form>
-    </div>
-    <!-- View toggle — shown after load -->
-    <div class="view-toggle" id="viewToggle" style="display:none;" title="Switch view">
-      <button class="view-btn active" id="listViewBtn" onclick="setView('list')" title="List view">
-        <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="3" rx="1"/><rect x="3" y="10.5" width="18" height="3" rx="1"/><rect x="3" y="16" width="18" height="3" rx="1"/></svg>
-      </button>
-      <button class="view-btn" id="gridViewBtn" onclick="setView('grid')" title="Grid view">
-        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg>
-      </button>
-    </div>
-    <div id="globalControls">
-      <div id="globalSliders">
-        <div class="g-row">
-          <label>Brightness</label>
-          <input type="range" id="globalBrightness" min="-100" max="100" value="0" oninput="applyGlobal()">
-          <span id="globalBrightnessVal">0</span>
-        </div>
-        <div class="g-row">
-          <label>Contrast</label>
-          <input type="range" id="globalContrast" min="-100" max="100" value="0" oninput="applyGlobal()">
-          <span id="globalContrastVal">0</span>
-        </div>
-      </div>
-      <button id="globalResetBtn" onclick="resetGlobal()">Reset</button>
-    </div>
-    </div>
-  </div>
-  <div id="headerPlaceholder"></div>
-  <div id="imageGallery" class="list-view"></div>
-
-  <!-- Image Editor Modal -->
-  <div id="editorOverlay">
-    <div id="editorModal">
-      <button id="editorCloseX" onclick="closeEditor()" title="Close">&#x2715;</button>
-      <h2 id="editorTitle">Edit Image</h2>
-
-      <div id="editorBody">
-        <div id="editorImgWrap">
-          <div id="resizeContainer">
-            <img id="editorImg" src="" alt="Edit preview" />
-            <div class="rh rh-nw" data-dir="nw"></div>
-            <div class="rh rh-n"  data-dir="n"></div>
-            <div class="rh rh-ne" data-dir="ne"></div>
-            <div class="rh rh-e"  data-dir="e"></div>
-            <div class="rh rh-se" data-dir="se"></div>
-            <div class="rh rh-s"  data-dir="s"></div>
-            <div class="rh rh-sw" data-dir="sw"></div>
-            <div class="rh rh-w"  data-dir="w"></div>
-            <span id="resizeLabel"></span>
-          </div>
-        </div>
-
-        <div id="editorControls">
-
-          <div class="ctrl-section" style="padding-top: 16px;">
-            <div class="ctrl-label">Adjust</div>
-            <div class="slider-row">
-              <div class="slider-row-header">
-                <label>Brightness</label>
-                <span id="brightnessVal">0</span>
-              </div>
-              <input type="range" id="brightnessSlider" min="-100" max="100" value="0" oninput="applyFilters()">
-            </div>
-            <div class="slider-row">
-              <div class="slider-row-header">
-                <label>Contrast</label>
-                <span id="contrastVal">0</span>
-              </div>
-              <input type="range" id="contrastSlider" min="-100" max="100" value="0" oninput="applyFilters()">
-            </div>
-          </div>
-
-          <div class="ctrl-section">
-            <div class="ctrl-label">Rotate</div>
-            <div class="icon-btn-row">
-              <button class="icon-btn" onclick="rotateImage(-90)" title="Rotate Left">&#x21BA;</button>
-              <button class="icon-btn" onclick="rotateImage(90)"  title="Rotate Right">&#x21BB;</button>
-            </div>
-          </div>
-
-          <div class="ctrl-section">
-            <div class="ctrl-label">Free Rotate</div>
-            <div class="rotation-dial-wrap">
-              <div id="rotationDial">
-                <div id="dialPointer"></div>
-                <div id="dialCenter"></div>
-              </div>
-              <span id="dialAngleLabel">0&deg;</span>
-            </div>
-          </div>
-
-          <div class="ctrl-section">
-            <div class="ctrl-label">Zoom</div>
-            <div class="icon-btn-row">
-              <button class="icon-btn" onclick="zoomImage(-0.1)" title="Zoom Out">&#x2212;</button>
-              <button class="icon-btn" onclick="zoomImage(0.1)"  title="Zoom In">+</button>
-            </div>
-          </div>
-
-          <div class="ctrl-section">
-            <div class="ctrl-label">Resize</div>
-            <div class="icon-btn-row">
-              <button class="icon-btn" id="resizeToggleBtn" onclick="toggleHandles()" title="Toggle resize handles" style="width:100%; font-size:12px; font-weight:bold;">Handles: Off</button>
-            </div>
-          </div>
-
-          <div class="ctrl-spacer"></div>
-
-          <div class="editor-actions">
-            <button id="resetBtn" onclick="resetEditor()">Reset</button>
-            <button id="closeEditorBtn" onclick="closeEditor()">Close</button>
-          </div>
-
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Scroll to Top -->
-  <div id="scrollTopWrapper" onclick="scrollToTop()">
-    <div class="scroll-icon">&#x2191;</div>
-  </div>
-
-  <script>
-    function copyToClipboard(button, url) {
-      navigator.clipboard.writeText(url).then(() => {
-        button.textContent = "Copied!";
-        setTimeout(() => { button.textContent = "Copy"; }, 1500);
-      });
-    }
-
-    const BATCH_SIZE = 30;
-    let allUrls = [];
-    let currentIndex = 0;
-    let sentinelObserver = null;
-
-    const lazyObserver = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (!entry.isIntersecting) return;
-        const img = entry.target;
-        if (img.src) return;
-        img.src = img.dataset.src;
-        const b = parseInt(document.getElementById("globalBrightness").value);
-        const c = parseInt(document.getElementById("globalContrast").value);
-        if (b !== 0 || c !== 0) {
-          img.style.filter = `brightness(${(b + 100) / 100}) contrast(${(c + 100) / 100})`;
-        }
-        lazyObserver.unobserve(img);
-      });
-    }, { rootMargin: "300px 0px" });
-
-    function createCard(url, index) {
-      const container = document.createElement("div");
-      container.className = "image-container";
-
-      const number = document.createElement("div");
-      number.className = "image-number";
-      number.textContent = `Image ${index}`;
-
-      const img = document.createElement("img");
-      img.src = url;
-      img.alt = "Image";
-
-      const urlRow = document.createElement("div");
-      urlRow.className = "url-row";
-
-      const caption = document.createElement("p");
-      caption.className = "url-text";
-      caption.textContent = url;
-      caption.title = url;
-
-      const copyBtn = document.createElement("button");
-      copyBtn.className = "copy-btn";
-      copyBtn.textContent = "Copy";
-      copyBtn.onclick = () => copyToClipboard(copyBtn, url);
-
-      const editBtn = document.createElement("button");
-      editBtn.className = "edit-btn";
-      editBtn.textContent = "Edit";
-      editBtn.onclick = () => openEditor(url, index);
-
-      urlRow.appendChild(caption);
-      urlRow.appendChild(editBtn);
-      urlRow.appendChild(copyBtn);
-      container.appendChild(number);
-      container.appendChild(img);
-      container.appendChild(urlRow);
-
-      return container;
-    }
-
-    function applyGlobal() {
-      const b = parseInt(document.getElementById("globalBrightness").value);
-      const c = parseInt(document.getElementById("globalContrast").value);
-      document.getElementById("globalBrightnessVal").textContent = b;
-      document.getElementById("globalContrastVal").textContent   = c;
-      document.querySelectorAll("#imageGallery img").forEach(img => {
-        img.style.filter = `brightness(${(b + 100) / 100}) contrast(${(c + 100) / 100})`;
-      });
-    }
-
-    function resetGlobal() {
-      document.getElementById("globalBrightness").value = 0;
-      document.getElementById("globalContrast").value   = 0;
-      document.getElementById("globalBrightnessVal").textContent = 0;
-      document.getElementById("globalContrastVal").textContent   = 0;
-      document.querySelectorAll("#imageGallery img").forEach(img => { img.style.filter = ""; });
-    }
-
-    let currentRotation = 0;
-    let currentZoom     = 1;
-
-    function openEditor(url, index) {
-      const editorImg = document.getElementById("editorImg");
-      document.getElementById("editorTitle").textContent = `Canvas — Image ${index}`;
-      resetEditor();
-      document.getElementById("editorOverlay").classList.add("open");
-      document.body.style.overflow = "hidden";
-      editorImg.style.width = editorImg.style.height = "";
-      editorImg.style.maxWidth = editorImg.style.maxHeight = "";
-      editorImg.onload = function () {
-        const wrap  = document.getElementById("editorImgWrap");
-        const maxW  = wrap.clientWidth  - 16;
-        const maxH  = wrap.clientHeight - 16;
-        const scale = Math.min(1, maxW / editorImg.naturalWidth, maxH / editorImg.naturalHeight);
-        editorImg.style.width     = Math.round(editorImg.naturalWidth  * scale) + "px";
-        editorImg.style.height    = Math.round(editorImg.naturalHeight * scale) + "px";
-        editorImg.style.maxWidth  = "none";
-        editorImg.style.maxHeight = "none";
-      };
-      editorImg.src = url;
-    }
-
-    function closeEditor() {
-      document.getElementById("editorOverlay").classList.remove("open");
-      document.body.style.overflow = "";
-    }
-
-    function applyFilters() {
-      const brightness = parseInt(document.getElementById("brightnessSlider").value);
-      const contrast   = parseInt(document.getElementById("contrastSlider").value);
-      document.getElementById("brightnessVal").textContent = brightness;
-      document.getElementById("contrastVal").textContent   = contrast;
-      document.getElementById("editorImg").style.filter =
-        `brightness(${(brightness + 100) / 100}) contrast(${(contrast + 100) / 100})`;
-    }
-
-    function rotateImage(deg) { currentRotation = (currentRotation + deg + 360) % 360; applyTransform(); }
-
-    function zoomImage(delta) {
-      currentZoom = Math.min(4, Math.max(0.2, +(currentZoom + delta).toFixed(1)));
-      applyTransform();
-    }
-
-    const resizeCont = document.getElementById("resizeContainer");
-
-    function applyTransform() {
-      resizeCont.style.transform =
-        `translate(${panX}px, ${panY}px) rotate(${currentRotation + dialAngle}deg) scale(${currentZoom})`;
-    }
-
-    function resetEditor() {
-      currentRotation = 0; currentZoom = 1; panX = 0; panY = 0;
-      document.getElementById("brightnessSlider").value    = 0;
-      document.getElementById("contrastSlider").value      = 0;
-      document.getElementById("brightnessVal").textContent = 0;
-      document.getElementById("contrastVal").textContent   = 0;
-      const img = document.getElementById("editorImg");
-      img.style.filter = img.style.width = img.style.height = "";
-      img.style.maxWidth = img.style.maxHeight = "";
-      img.style.cursor = "grab";
-      dialAngle = 0;
-      if (dialPointer) dialPointer.style.transform = "translateX(-50%) rotate(0deg)";
-      if (dialLabel)   dialLabel.textContent = "0°";
-      resizeCont.style.transform = "translate(0px, 0px) rotate(0deg) scale(1)";
-      document.getElementById("resizeLabel").textContent = "";
-      handlesOn = false;
-      resizeCont.classList.remove("handles-on");
-      const btn = document.getElementById("resizeToggleBtn");
-      if (btn) { btn.textContent = "Handles: Off"; btn.style.background = btn.style.color = btn.style.borderColor = ""; }
-    }
-
-    let resizing = false, resizeDir = "";
-    let resizeStartX = 0, resizeStartY = 0, resizeStartW = 0, resizeStartH = 0;
-    let resizePanStartX = 0, resizePanStartY = 0;
-    let resizeRafId = null, pendingResizeX = 0, pendingResizeY = 0;
-
-    function initResize(e) {
-      e.stopPropagation(); e.preventDefault();
-      resizing  = true;
-      resizeDir = e.currentTarget.dataset.dir;
-      const cx = e.touches ? e.touches[0].clientX : e.clientX;
-      const cy = e.touches ? e.touches[0].clientY : e.clientY;
-      resizeStartX = cx; resizeStartY = cy;
-      resizeStartW = imgEl.offsetWidth; resizeStartH = imgEl.offsetHeight;
-      resizePanStartX = panX; resizePanStartY = panY;
-      imgEl.style.width = resizeStartW + "px"; imgEl.style.height = resizeStartH + "px";
-      imgEl.style.maxWidth = imgEl.style.maxHeight = "none";
-      document.addEventListener("mousemove", doResize);
-      document.addEventListener("mouseup",   endResize);
-      document.addEventListener("touchmove", doResize, { passive: false });
-      document.addEventListener("touchend",  endResize);
-    }
-
-    function doResize(e) {
-      if (!resizing) return;
-      if (e.cancelable) e.preventDefault();
-      pendingResizeX = e.touches ? e.touches[0].clientX : e.clientX;
-      pendingResizeY = e.touches ? e.touches[0].clientY : e.clientY;
-      if (resizeRafId) return;
-      resizeRafId = requestAnimationFrame(applyResize);
-    }
-
-    function applyResize() {
-      resizeRafId = null;
-      const dx = pendingResizeX - resizeStartX;
-      const dy = pendingResizeY - resizeStartY;
-      let newW = resizeStartW, newH = resizeStartH, adjX = 0, adjY = 0;
-      if (resizeDir.includes("e")) newW = Math.max(40, resizeStartW + dx);
-      if (resizeDir.includes("s")) newH = Math.max(40, resizeStartH + dy);
-      if (resizeDir.includes("w")) { newW = Math.max(40, resizeStartW - dx); adjX = (resizeStartW - newW) / 2; }
-      if (resizeDir.includes("n")) { newH = Math.max(40, resizeStartH - dy); adjY = (resizeStartH - newH) / 2; }
-      panX = resizePanStartX + adjX;
-      panY = resizePanStartY + adjY;
-      resizeCont.style.transform = `translate(${panX}px, ${panY}px) rotate(${currentRotation + dialAngle}deg) scale(${currentZoom})`;
-      const changesW = resizeDir.includes("e") || resizeDir.includes("w");
-      const changesH = resizeDir.includes("n") || resizeDir.includes("s");
-      if (changesW) { imgEl.style.width = newW + "px"; imgEl.style.maxWidth = "none"; }
-      if (changesH) { imgEl.style.height = newH + "px"; imgEl.style.maxHeight = "none"; }
-      document.getElementById("resizeLabel").textContent = `${Math.round(newW)} × ${Math.round(newH)}`;
-    }
-
-    function endResize() {
-      resizing = false;
-      document.removeEventListener("mousemove", doResize);
-      document.removeEventListener("mouseup",   endResize);
-      document.removeEventListener("touchmove", doResize);
-      document.removeEventListener("touchend",  endResize);
-    }
-
-    document.querySelectorAll(".rh").forEach(h => {
-      h.addEventListener("mousedown",  initResize);
-      h.addEventListener("touchstart", initResize, { passive: false });
-    });
-
-    let handlesOn = false;
-    function toggleHandles() {
-      handlesOn = !handlesOn;
-      resizeCont.classList.toggle("handles-on", handlesOn);
-      const btn = document.getElementById("resizeToggleBtn");
-      btn.textContent       = handlesOn ? "Handles: On"  : "Handles: Off";
-      btn.style.background  = handlesOn ? "#007BFF" : "";
-      btn.style.color       = handlesOn ? "white"   : "";
-      btn.style.borderColor = handlesOn ? "#007BFF" : "";
-    }
-
-    let dialAngle = 0, dialDragging = false, dialCenterX = 0, dialCenterY = 0;
-
-    const dial        = document.getElementById("rotationDial");
-    const dialPointer = document.getElementById("dialPointer");
-    const dialLabel   = document.getElementById("dialAngleLabel");
-
-    function updateDial(angle) {
-      let norm = ((angle % 360) + 360) % 360;
-      if (norm > 180) norm -= 360;
-      dialAngle = norm;
-      dialPointer.style.transform = `translateX(-50%) rotate(${dialAngle}deg)`;
-      dialLabel.textContent = `${dialAngle > 0 ? "+" : ""}${Math.round(dialAngle)}°`;
-      resizeCont.style.transform =
-        `translate(${panX}px, ${panY}px) rotate(${currentRotation + dialAngle}deg) scale(${currentZoom})`;
-    }
-
-    function getAngleFromCenter(cx, cy, px, py) {
-      return Math.atan2(py - cy, px - cx) * (180 / Math.PI) + 90;
-    }
-
-    dial.addEventListener("mousedown", (e) => {
-      dialDragging = true;
-      const r = dial.getBoundingClientRect();
-      dialCenterX = r.left + r.width / 2; dialCenterY = r.top + r.height / 2;
-      e.preventDefault();
-    });
-    window.addEventListener("mousemove", (e) => { if (!dialDragging) return; updateDial(getAngleFromCenter(dialCenterX, dialCenterY, e.clientX, e.clientY)); });
-    window.addEventListener("mouseup", () => { dialDragging = false; });
-    dial.addEventListener("touchstart", (e) => {
-      dialDragging = true;
-      const r = dial.getBoundingClientRect();
-      dialCenterX = r.left + r.width / 2; dialCenterY = r.top + r.height / 2;
-    }, { passive: true });
-    window.addEventListener("touchmove", (e) => {
-      if (!dialDragging || e.touches.length !== 1) return;
-      updateDial(getAngleFromCenter(dialCenterX, dialCenterY, e.touches[0].clientX, e.touches[0].clientY));
-    }, { passive: true });
-    window.addEventListener("touchend", () => { dialDragging = false; });
-
-    let panX = 0, panY = 0, startX = 0, startY = 0, isDragging = false;
-    let panRafId = null, pendingPanX = 0, pendingPanY = 0;
-
-    const imgEl   = document.getElementById("editorImg");
-    const imgWrap = document.getElementById("editorImgWrap");
-
-    imgEl.addEventListener("mousedown", (e) => {
-      isDragging = true;
-      startX = e.clientX - panX; startY = e.clientY - panY;
-      imgEl.style.cursor = "grabbing"; e.preventDefault();
-    });
-
-    window.addEventListener("mousemove", (e) => {
-      if (!isDragging) return;
-      pendingPanX = e.clientX - startX; pendingPanY = e.clientY - startY;
-      if (panRafId) return;
-      panRafId = requestAnimationFrame(() => {
-        panRafId = null; panX = pendingPanX; panY = pendingPanY;
-        resizeCont.style.transform = `translate(${panX}px, ${panY}px) rotate(${currentRotation + dialAngle}deg) scale(${currentZoom})`;
-      });
-    });
-
-    window.addEventListener("mouseup", () => { isDragging = false; imgEl.style.cursor = "grab"; });
-
-    imgEl.addEventListener("touchstart", (e) => {
-      if (e.touches.length !== 1) return;
-      isDragging = true;
-      startX = e.touches[0].clientX - panX; startY = e.touches[0].clientY - panY;
-    }, { passive: true });
-
-    window.addEventListener("touchmove", (e) => {
-      if (!isDragging || e.touches.length !== 1) return;
-      panX = e.touches[0].clientX - startX; panY = e.touches[0].clientY - startY;
-      resizeCont.style.transform = `translate(${panX}px, ${panY}px) rotate(${currentRotation + dialAngle}deg) scale(${currentZoom})`;
-    }, { passive: true });
-
-    window.addEventListener("touchend", () => { isDragging = false; });
-
-    imgEl.addEventListener("wheel", (e) => {
-      e.preventDefault();
-      const prevZoom  = currentZoom;
-      currentZoom     = Math.min(4, Math.max(0.2, +(currentZoom + (e.deltaY > 0 ? -0.1 : 0.1)).toFixed(2)));
-      const ratio     = currentZoom / prevZoom;
-      const rect      = imgEl.getBoundingClientRect();
-      panX = panX + (e.clientX - (rect.left + rect.width  / 2)) * (1 - ratio);
-      panY = panY + (e.clientY - (rect.top  + rect.height / 2)) * (1 - ratio);
-      resizeCont.style.transform = `translate(${panX}px, ${panY}px) rotate(${currentRotation + dialAngle}deg) scale(${currentZoom})`;
-    }, { passive: false });
-
-    document.getElementById("editorOverlay").addEventListener("click", function(e) { if (e.target === this) closeEditor(); });
-    document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeEditor(); });
-
-    function loadNextBatch() {
-      const gallery = document.getElementById("imageGallery");
-      const oldSentinel = document.getElementById("sentinel");
-      if (oldSentinel) oldSentinel.remove();
-      if (currentIndex >= allUrls.length) return;
-      const fragment = document.createDocumentFragment();
-      const end = Math.min(currentIndex + BATCH_SIZE, allUrls.length);
-      for (let i = currentIndex; i < end; i++) fragment.appendChild(createCard(allUrls[i], i + 1));
-      currentIndex = end;
-      if (currentIndex < allUrls.length) {
-        const sentinel = document.createElement("div");
-        sentinel.id = "sentinel"; sentinel.style.height = "1px";
-        fragment.appendChild(sentinel);
-        gallery.appendChild(fragment);
-        sentinelObserver = new IntersectionObserver((entries) => {
-          if (entries[0].isIntersecting) { sentinelObserver.disconnect(); loadNextBatch(); }
-        }, { rootMargin: "300px" });
-        sentinelObserver.observe(document.getElementById("sentinel"));
-      } else {
-        gallery.appendChild(fragment);
-      }
-    }
-
-    document.getElementById("imageForm").addEventListener("submit", function (e) {
-      e.preventDefault();
-      allUrls = document.getElementById("urls").value.split("\n").map(u => u.trim()).filter(Boolean);
-      currentIndex = 0;
-      document.getElementById("imageGallery").innerHTML = "";
-      document.getElementById("globalControls").style.display = "flex";
-      document.getElementById("viewToggle").style.display = "flex";
-      resetGlobal();
-      if (sentinelObserver) sentinelObserver.disconnect();
-      loadNextBatch();
-      imagesLoaded = true;
-      header.classList.add("shrunk");
-      setTimeout(syncPlaceholder, 320);
-    });
-
-    /* ── View toggle ── */
-    let currentView = 'list';
-    function setView(mode) {
-      currentView = mode;
-      const gallery = document.getElementById('imageGallery');
-      const listBtn = document.getElementById('listViewBtn');
-      const gridBtn = document.getElementById('gridViewBtn');
-      if (mode === 'grid') {
-        gallery.classList.replace('list-view', 'grid-view');
-        gridBtn.classList.add('active'); listBtn.classList.remove('active');
-      } else {
-        gallery.classList.replace('grid-view', 'list-view');
-        listBtn.classList.add('active'); gridBtn.classList.remove('active');
-      }
-    }
-
-    /* ── Theme ── */
-    function toggleTheme() {
-      const isDark = document.body.classList.toggle("dark");
-      document.getElementById("themeToggle").textContent = isDark ? "☀️" : "🌙";
-    }
-
-    const header      = document.getElementById("siteHeader");
-    const placeholder = document.getElementById("headerPlaceholder");
-    let imagesLoaded  = false;
-
-    function syncPlaceholder() { placeholder.style.height = header.offsetHeight + "px"; }
-
-    window.addEventListener("scroll", function () {
-      const scrolled = window.scrollY > 80;
-      document.getElementById("scrollTopWrapper").style.display = scrolled ? "flex" : "none";
-      /* Only expand header on scroll-back if images haven't been loaded yet */
-      if (!imagesLoaded) header.classList.toggle("shrunk", scrolled);
-      setTimeout(syncPlaceholder, 320);
-    }, { passive: true });
-
-    window.addEventListener("load", syncPlaceholder);
-    syncPlaceholder();
-
-    function scrollToTop() { window.scrollTo({ top: 0, behavior: "smooth" }); }
-  </script>
+<!-- FIX #6: All onclick attributes removed from HTML. Events are bound in JS below. -->
+<button id="themeToggle" title="Toggle dark/light mode">🌙</button>
+<div id="siteHeader">
+<h1>Media Player</h1>
+<div id="headerInner">
+<div class="form-container">
+<textarea id="mediaUrls" placeholder="Paste image or video URLs (one per line)"></textarea>
+<button class="submit-btn" id="loadMediaBtn">Load Media</button>
+</div>
+<div id="filterTabs">
+<select id="filterSelect" title="Filter media">
+<option value="all" id="optAll">All (0)</option>
+<option value="image" id="optImages">📷 Img (0)</option>
+<option value="video" id="optVideos">🎬 Vid (0)</option>
+</select>
+</div>
+<div class="view-toggle" id="viewToggle" style="display:none;" title="Switch view">
+<button class="view-btn active" id="listViewBtn" title="List view">
+<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="3" rx="1"/><rect x="3" y="10.5" width="18" height="3" rx="1"/><rect x="3" y="16" width="18" height="3" rx="1"/></svg>
+</button>
+<button class="view-btn" id="gridViewBtn" title="Grid view">
+<svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg>
+</button>
+</div>
+<div id="speedWrapper">
+<span id="speedValue">1×</span>
+<input type="range" id="speedControl" min="0.25" max="5" step="0.01" value="1">
+</div>
+<button id="muteBtn" title="Toggle mute all">
+<svg id="muteIcon" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+</button>
+<button id="loopBtn" title="Toggle loop for all">
+<svg viewBox="0 0 24 24"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
+</button>
+<div id="globalControls">
+<div id="globalSliders">
+<div class="g-row">
+<label>Brightness</label>
+<input type="range" id="globalBrightness" min="-100" max="100" value="0">
+<span id="globalBrightnessVal">0</span>
+</div>
+<div class="g-row">
+<label>Contrast</label>
+<input type="range" id="globalContrast" min="-100" max="100" value="0">
+<span id="globalContrastVal">0</span>
+</div>
+</div>
+<button id="globalResetBtn">Reset</button>
+</div>
+</div>
+</div>
+<div id="headerPlaceholder"></div>
+<div id="mediaGallery" class="list-view"></div>
+<div id="editorOverlay">
+<div id="editorModal">
+<!-- FIX #6: onclick removed — bound via addEventListener in JS -->
+<button id="editorCloseX" title="Close">&#x2715;</button>
+<h2 id="editorTitle">Edit Image</h2>
+<div id="editorBody">
+<div id="editorImgWrap">
+<div id="resizeContainer">
+<img id="editorImg" src="" alt="Edit preview" />
+<div class="rh rh-nw" data-dir="nw"></div>
+<div class="rh rh-n"  data-dir="n"></div>
+<div class="rh rh-ne" data-dir="ne"></div>
+<div class="rh rh-e"  data-dir="e"></div>
+<div class="rh rh-se" data-dir="se"></div>
+<div class="rh rh-s"  data-dir="s"></div>
+<div class="rh rh-sw" data-dir="sw"></div>
+<div class="rh rh-w"  data-dir="w"></div>
+<span id="resizeLabel"></span>
+</div>
+</div>
+<div id="editorControls">
+<div class="ctrl-section" style="padding-top:16px;">
+<div class="ctrl-label">Adjust</div>
+<div class="slider-row">
+<div class="slider-row-header"><label>Brightness</label><span id="brightnessVal">0</span></div>
+<!-- FIX #6: oninput removed — bound via addEventListener in JS -->
+<input type="range" id="brightnessSlider" min="-100" max="100" value="0">
+</div>
+<div class="slider-row">
+<div class="slider-row-header"><label>Contrast</label><span id="contrastVal">0</span></div>
+<input type="range" id="contrastSlider" min="-100" max="100" value="0">
+</div>
+</div>
+<div class="ctrl-section">
+<div class="ctrl-label">Rotate</div>
+<div class="icon-btn-row">
+<!-- FIX #6: onclick removed — bound via addEventListener in JS -->
+<button class="icon-btn" id="rotateLeftBtn"  title="Rotate Left">&#x21BA;</button>
+<button class="icon-btn" id="rotateRightBtn" title="Rotate Right">&#x21BB;</button>
+</div>
+</div>
+<div class="ctrl-section">
+<div class="ctrl-label">Free Rotate</div>
+<div class="rotation-dial-wrap">
+<div id="rotationDial"><div id="dialPointer"></div><div id="dialCenter"></div></div>
+<span id="dialAngleLabel">0&deg;</span>
+</div>
+</div>
+<div class="ctrl-section">
+<div class="ctrl-label">Zoom</div>
+<div class="icon-btn-row">
+<button class="icon-btn" id="zoomOutBtn" title="Zoom Out">&#x2212;</button>
+<button class="icon-btn" id="zoomInBtn"  title="Zoom In">+</button>
+</div>
+</div>
+<div class="ctrl-section">
+<div class="ctrl-label">Resize</div>
+<div class="icon-btn-row">
+<button class="icon-btn" id="resizeToggleBtn" style="width:100%;font-size:12px;font-weight:bold;" title="Toggle resize handles">Handles: Off</button>
+</div>
+</div>
+<div class="ctrl-spacer"></div>
+<div class="editor-actions">
+<button id="resetBtn">Reset</button>
+<button id="closeEditorBtn">Close</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="scrollTopWrapper">
+<div class="scroll-icon">&#x2191;</div>
+</div>
+<script>
+(function () {
+'use strict';
+const dom = {
+body:               document.body,
+themeToggle:        document.getElementById('themeToggle'),
+siteHeader:         document.getElementById('siteHeader'),
+headerPlaceholder:  document.getElementById('headerPlaceholder'),
+mediaUrls:          document.getElementById('mediaUrls'),
+loadMediaBtn:       document.getElementById('loadMediaBtn'),
+filterTabs:         document.getElementById('filterTabs'),
+filterSelect:       document.getElementById('filterSelect'),
+optAll:             document.getElementById('optAll'),
+optImages:          document.getElementById('optImages'),
+optVideos:          document.getElementById('optVideos'),
+viewToggle:         document.getElementById('viewToggle'),
+listViewBtn:        document.getElementById('listViewBtn'),
+gridViewBtn:        document.getElementById('gridViewBtn'),
+speedWrapper:       document.getElementById('speedWrapper'),
+speedControl:       document.getElementById('speedControl'),
+speedValue:         document.getElementById('speedValue'),
+muteBtn:            document.getElementById('muteBtn'),
+muteIcon:           document.getElementById('muteIcon'),
+loopBtn:            document.getElementById('loopBtn'),
+globalControls:     document.getElementById('globalControls'),
+globalBrightness:   document.getElementById('globalBrightness'),
+globalBrightnessVal:document.getElementById('globalBrightnessVal'),
+globalContrast:     document.getElementById('globalContrast'),
+globalContrastVal:  document.getElementById('globalContrastVal'),
+globalResetBtn:     document.getElementById('globalResetBtn'),
+mediaGallery:       document.getElementById('mediaGallery'),
+scrollTopWrapper:   document.getElementById('scrollTopWrapper'),
+editorOverlay:      document.getElementById('editorOverlay'),
+editorModal:        document.getElementById('editorModal'),
+editorCloseX:       document.getElementById('editorCloseX'),
+editorTitle:        document.getElementById('editorTitle'),
+editorImgWrap:      document.getElementById('editorImgWrap'),
+resizeContainer:    document.getElementById('resizeContainer'),
+editorImg:          document.getElementById('editorImg'),
+resizeLabel:        document.getElementById('resizeLabel'),
+brightnessSlider:   document.getElementById('brightnessSlider'),
+brightnessVal:      document.getElementById('brightnessVal'),
+contrastSlider:     document.getElementById('contrastSlider'),
+contrastVal:        document.getElementById('contrastVal'),
+rotateLeftBtn:      document.getElementById('rotateLeftBtn'),
+rotateRightBtn:     document.getElementById('rotateRightBtn'),
+zoomOutBtn:         document.getElementById('zoomOutBtn'),
+zoomInBtn:          document.getElementById('zoomInBtn'),
+resizeToggleBtn:    document.getElementById('resizeToggleBtn'),
+resetBtn:           document.getElementById('resetBtn'),
+closeEditorBtn:     document.getElementById('closeEditorBtn'),
+rotationDial:       document.getElementById('rotationDial'),
+dialPointer:        document.getElementById('dialPointer'),
+dialAngleLabel:     document.getElementById('dialAngleLabel'),
+};
+const IMG_EXTS   = new Set(['jpg','jpeg','png','gif','webp','svg','bmp','ico','avif','tiff']);
+const VIDEO_EXTS = new Set(['mp4','webm','ogg','ogv','mov','mkv','avi','flv','m4v','3gp','wmv','ts','m3u8','mpg','mpeg']);
+function classifyUrl(url) {
+let ext = '';
+try {
+ext = new URL(url).pathname.split('.').pop().toLowerCase();
+} catch (e) {
+ext = url.split('?')[0].split('.').pop().toLowerCase();
+}
+if (IMG_EXTS.has(ext))   return 'image';
+if (VIDEO_EXTS.has(ext)) return 'video';
+return 'unknown';
+}
+function probeUrl(url) {
+return fetch(url, { method: 'HEAD' })
+.then(res => {
+const ct = res.headers.get('Content-Type') || '';
+if (ct.startsWith('video/')) return 'video';
+if (ct.startsWith('image/')) return 'image';
+return 'image';
+})
+.catch(() => 'image');
+}
+let currentView   = 'list';
+let gridCols      = 2;
+let currentFilter = 'all';
+let isMuted       = false;
+let isLooping     = false;
+let mediaLoaded   = false;
+const BATCH_SIZE = 30;
+let allMediaUrls = [];
+let mediaIndex   = 0;
+let sentinelObs  = null;
+let totalImages  = 0;
+let totalVideos  = 0;
+let imageSeq     = 0;
+let videoSeq     = 0;
+let globalSeq    = 0;
+function toggleTheme() {
+const isDark = dom.body.classList.toggle('dark');
+dom.themeToggle.textContent = isDark ? '☀️' : '🌙';
+}
+function setFilter(type) {
+currentFilter = type;
+dom.filterSelect.value = type;
+dom.mediaGallery.querySelectorAll('.media-card').forEach(card => {
+card.style.display = (type === 'all' || card.dataset.type === type) ? '' : 'none';
+});
+}
+function updateCounts() {
+dom.optAll.textContent    = `All (${totalImages + totalVideos})`;
+dom.optImages.textContent = `📷 Img (${totalImages})`;
+dom.optVideos.textContent = `🎬 Vid (${totalVideos})`;
+}
+function applyGridCols() {
+dom.mediaGallery.classList.remove('cols-3', 'cols-4');
+if (gridCols === 3) dom.mediaGallery.classList.add('cols-3');
+if (gridCols === 4) dom.mediaGallery.classList.add('cols-4');
+dom.gridViewBtn.title = `Grid view (${gridCols} per row — click to change)`;
+}
+function setView(mode) {
+currentView = mode;
+if (mode === 'grid') {
+dom.mediaGallery.classList.replace('list-view', 'grid-view');
+dom.gridViewBtn.classList.add('active');
+dom.listViewBtn.classList.remove('active');
+applyGridCols();
+adjustSpacer();
+} else {
+dom.mediaGallery.classList.replace('grid-view', 'list-view');
+dom.listViewBtn.classList.add('active');
+dom.gridViewBtn.classList.remove('active');
+adjustSpacer();
+}
+}
+function cycleGrid() {
+if (currentView !== 'grid') {
+gridCols = 2;
+setView('grid');
+return;
+}
+gridCols = gridCols >= 4 ? 2 : gridCols + 1;
+applyGridCols();
+}
+function toggleMute() {
+isMuted = !isMuted;
+dom.muteIcon.innerHTML = isMuted
+? '<path d="M16.5 12A4.5 4.5 0 0 0 14 7.97v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51A8.796 8.796 0 0 0 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06A8.99 8.99 0 0 0 17.73 18l1.27 1.27L20.27 18 5.27 3 4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>'
+: '<path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>';
+dom.muteBtn.classList.toggle('muted', isMuted);
+dom.mediaGallery.querySelectorAll('video').forEach(v => { v.muted = isMuted; });
+}
+function toggleLoop() {
+isLooping = !isLooping;
+dom.loopBtn.classList.toggle('looping', isLooping);
+dom.mediaGallery.querySelectorAll('video').forEach(v => { v.loop = isLooping; });
+}
+const snapSteps = [];
+for (let s = 0.25; s <= 5; s += 0.25) snapSteps.push(parseFloat(s.toFixed(2)));
+function snapSpeed(val) {
+return snapSteps.reduce((p, c) => Math.abs(c - val) < Math.abs(p - val) ? c : p);
+}
+function updateSpeed() {
+const sn = snapSpeed(parseFloat(dom.speedControl.value));
+dom.speedControl.value  = sn;
+dom.speedValue.textContent = sn + '×';
+dom.mediaGallery.querySelectorAll('video').forEach(v => { v.playbackRate = sn; });
+}
+function applyGlobal() {
+const b = parseInt(dom.globalBrightness.value);
+const c = parseInt(dom.globalContrast.value);
+dom.globalBrightnessVal.textContent = b;
+dom.globalContrastVal.textContent   = c;
+const f = `brightness(${(b + 100) / 100}) contrast(${(c + 100) / 100})`;
+dom.mediaGallery.querySelectorAll('img, video').forEach(el => { el.style.filter = f; });
+}
+function resetGlobal() {
+dom.globalBrightness.value          = 0;
+dom.globalContrast.value            = 0;
+dom.globalBrightnessVal.textContent = 0;
+dom.globalContrastVal.textContent   = 0;
+dom.mediaGallery.querySelectorAll('img, video').forEach(el => { el.style.filter = ''; });
+}
+const videoPlayObserver = new IntersectionObserver((entries) => {
+entries.forEach(e => {
+if (e.isIntersecting) e.target.play().catch(() => {});
+else                  e.target.pause();
+});
+}, { threshold: 0.6 });
+const videoLazyObserver = new IntersectionObserver((entries) => {
+entries.forEach(entry => {
+if (!entry.isIntersecting) return;
+const video = entry.target;
+if (video.dataset.src && !video.src) {
+video.src = video.dataset.src;
+const b = parseInt(dom.globalBrightness.value);
+const c = parseInt(dom.globalContrast.value);
+if (b !== 0 || c !== 0) {
+video.style.filter = `brightness(${(b + 100) / 100}) contrast(${(c + 100) / 100})`;
+}
+video.muted        = isMuted;
+video.loop         = isLooping;
+video.playbackRate = snapSpeed(parseFloat(dom.speedControl.value));
+video.controls     = true;
+}
+videoLazyObserver.unobserve(video);
+videoPlayObserver.observe(video);
+});
+}, { rootMargin: '300px 0px' });
+const lazyObserver = new IntersectionObserver((entries) => {
+entries.forEach(entry => {
+if (!entry.isIntersecting) return;
+const img = entry.target;
+if (img.src && img.src !== window.location.href) return;
+img.src = img.dataset.src;
+const b = parseInt(dom.globalBrightness.value);
+const c = parseInt(dom.globalContrast.value);
+if (b !== 0 || c !== 0) img.style.filter = `brightness(${(b + 100) / 100}) contrast(${(c + 100) / 100})`;
+lazyObserver.unobserve(img);
+});
+}, { rootMargin: '300px 0px' });
+function copyUrl(btn, url) {
+navigator.clipboard.writeText(url).then(() => {
+btn.textContent = 'Copied!';
+setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
+}).catch(() => {
+try {
+const ta = document.createElement('textarea');
+ta.value = url;
+ta.style.position = 'fixed'; ta.style.opacity = '0';
+document.body.appendChild(ta); ta.select();
+document.execCommand('copy');
+document.body.removeChild(ta);
+btn.textContent = 'Copied!';
+setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
+} catch (e) {
+btn.textContent = 'Failed';
+setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
+}
+});
+}
+function createImageCard(url, imgNum, isFallback = false) {
+const card = document.createElement('div');
+card.className    = 'media-card type-image';
+card.dataset.type = 'image';
+const badge = document.createElement('div');
+badge.className   = 'type-badge badge-image';
+badge.textContent = '📷 Image';
+card.appendChild(badge);
+const label = document.createElement('div');
+label.className   = 'media-label';
+label.textContent = `Media ${imgNum}`;
+card.appendChild(label);
+const img = document.createElement('img');
+img.dataset.src = url;
+img.alt         = `Media ${imgNum}`;
+if (!isFallback) {
+img.onerror = function () {
+if (!card.dataset.failed) {
+card.dataset.failed = 'true';
+const newCard = createVideoCard(url, imgNum, true);
+card.replaceWith(newCard);
+const idx = allMediaUrls.findIndex(m => m.url === url);
+if (idx !== -1 && allMediaUrls[idx].type !== 'video') {
+allMediaUrls[idx].type = 'video';
+updateCounts();
+}
+}
+};
+}
+lazyObserver.observe(img);
+card.appendChild(img);
+const urlRow  = document.createElement('div');
+urlRow.className = 'url-row';
+const caption = document.createElement('p');
+caption.className   = 'url-text';
+caption.textContent = url;
+caption.title       = url;
+const editBtn = document.createElement('button');
+editBtn.className   = 'edit-btn';
+editBtn.textContent = 'Edit';
+editBtn.addEventListener('click', () => openEditor(url, imgNum));
+const copyBtn = document.createElement('button');
+copyBtn.className   = 'copy-btn';
+copyBtn.textContent = 'Copy';
+copyBtn.addEventListener('click', () => copyUrl(copyBtn, url));
+urlRow.appendChild(caption);
+urlRow.appendChild(editBtn);
+urlRow.appendChild(copyBtn);
+card.appendChild(urlRow);
+return card;
+}
+function createVideoCard(url, vidNum, isFallback = false) {
+const card = document.createElement('div');
+card.className    = 'media-card type-video';
+card.dataset.type = 'video';
+const badge = document.createElement('div');
+badge.className   = 'type-badge badge-video';
+badge.textContent = '🎬 Video';
+card.appendChild(badge);
+const label = document.createElement('div');
+label.className   = 'media-label';
+label.textContent = `Media ${vidNum}`;
+card.appendChild(label);
+const video = document.createElement('video');
+video.dataset.src = url;
+video.controls    = false;
+if (!isFallback) {
+video.onerror = function () {
+if (!card.dataset.failed) {
+card.dataset.failed = 'true';
+const newCard = createImageCard(url, vidNum, true);
+card.replaceWith(newCard);
+const idx = allMediaUrls.findIndex(m => m.url === url);
+if (idx !== -1 && allMediaUrls[idx].type !== 'image') {
+allMediaUrls[idx].type = 'image';
+updateCounts();
+}
+}
+};
+}
+videoLazyObserver.observe(video);
+card.appendChild(video);
+const urlRow  = document.createElement('div');
+urlRow.className = 'url-row';
+const caption = document.createElement('p');
+caption.className   = 'url-text';
+caption.textContent = url;
+caption.title       = url;
+const copyBtn = document.createElement('button');
+copyBtn.className   = 'copy-btn';
+copyBtn.textContent = 'Copy';
+copyBtn.addEventListener('click', () => copyUrl(copyBtn, url));
+urlRow.appendChild(caption);
+urlRow.appendChild(copyBtn);
+card.appendChild(urlRow);
+return card;
+}
+function createUnknownCard(url, seqNum) {
+const card = document.createElement('div');
+card.className    = 'media-card type-unknown';
+card.dataset.type = 'unknown';
+const badge = document.createElement('div');
+badge.className   = 'type-badge badge-unknown';
+badge.textContent = '⏳ Detecting…';
+card.appendChild(badge);
+const label = document.createElement('div');
+label.className   = 'media-label';
+label.textContent = `Media ${seqNum}`;
+card.appendChild(label);
+const placeholder = document.createElement('div');
+placeholder.className   = 'media-placeholder';
+placeholder.textContent = 'Detecting media type…';
+card.appendChild(placeholder);
+probeUrl(url).then(type => {
+let realCard;
+if (type === 'video') {
+videoSeq++; totalVideos++;
+realCard = createVideoCard(url, seqNum);
+const idx = allMediaUrls.findIndex(m => m.url === url);
+if (idx !== -1) allMediaUrls[idx].type = 'video';
+} else {
+imageSeq++; totalImages++;
+realCard = createImageCard(url, seqNum);
+const idx = allMediaUrls.findIndex(m => m.url === url);
+if (idx !== -1) allMediaUrls[idx].type = 'image';
+}
+if (currentFilter !== 'all' && type !== currentFilter) realCard.style.display = 'none';
+card.replaceWith(realCard);
+updateCounts();
+});
+return card;
+}
+function loadNextBatch() {
+const old = document.getElementById('sentinel');
+if (old) old.remove();
+if (mediaIndex >= allMediaUrls.length) return;
+const fragment = document.createDocumentFragment();
+const end      = Math.min(mediaIndex + BATCH_SIZE, allMediaUrls.length);
+for (let i = mediaIndex; i < end; i++) {
+const { url, type } = allMediaUrls[i];
+let card;
+globalSeq++;
+if (type === 'image') {
+imageSeq++; totalImages++;
+card = createImageCard(url, globalSeq);
+} else if (type === 'video') {
+videoSeq++; totalVideos++;
+card = createVideoCard(url, globalSeq);
+} else {
+card = createUnknownCard(url, globalSeq);
+}
+if (currentFilter !== 'all' && type !== currentFilter) card.style.display = 'none';
+fragment.appendChild(card);
+}
+mediaIndex = end;
+if (mediaIndex < allMediaUrls.length) {
+const sentinel    = document.createElement('div');
+sentinel.id       = 'sentinel';
+sentinel.style.height = '1px';
+fragment.appendChild(sentinel);
+dom.mediaGallery.appendChild(fragment);
+sentinelObs = new IntersectionObserver((entries) => {
+if (entries[0].isIntersecting) { sentinelObs.disconnect(); loadNextBatch(); }
+}, { rootMargin: '300px' });
+sentinelObs.observe(document.getElementById('sentinel'));
+} else {
+dom.mediaGallery.appendChild(fragment);
+}
+updateCounts();
+}
+function loadMedia() {
+const text = dom.mediaUrls.value.trim();
+if (!text) return;
+const urls = text.split('\n').map(u => u.trim()).filter(Boolean);
+videoPlayObserver.disconnect();
+videoLazyObserver.disconnect();
+lazyObserver.disconnect();
+if (sentinelObs) sentinelObs.disconnect();
+dom.mediaGallery.innerHTML = '';
+mediaIndex   = 0;
+imageSeq     = 0;
+videoSeq     = 0;
+totalImages  = 0;
+totalVideos  = 0;
+globalSeq    = 0;
+allMediaUrls = urls.map(url => ({ url, type: classifyUrl(url) }));
+const hasVideos = allMediaUrls.some(m => m.type === 'video');
+const hasImages = allMediaUrls.some(m => m.type === 'image');
+const hasMixed  = hasVideos && hasImages;
+loadNextBatch();
+updateCounts();
+dom.filterTabs.style.display      = hasMixed ? 'flex' : 'none';
+dom.viewToggle.style.display      = 'flex';
+dom.globalControls.style.display  = 'flex';
+dom.speedWrapper.style.display    = 'flex';
+dom.muteBtn.style.display         = 'flex';
+dom.loopBtn.style.display         = 'flex';
+dom.scrollTopWrapper.style.display = 'flex';
+setFilter('all');
+resetGlobal();
+mediaLoaded = true;
+dom.siteHeader.classList.add('shrunk');
+setTimeout(syncPlaceholder, 320);
+if (!scrollListenerAttached) {
+window.addEventListener('scroll', handleScroll, { passive: true });
+scrollListenerAttached = true;
+}
+adjustSpacer();
+setTimeout(adjustSpacer, 450);
+}
+let scrollListenerAttached = false;
+function syncPlaceholder() {
+dom.headerPlaceholder.style.height = dom.siteHeader.offsetHeight + 'px';
+}
+function adjustSpacer() {
+const h = dom.siteHeader.offsetHeight;
+dom.headerPlaceholder.style.height = h + 'px';
+document.documentElement.style.setProperty('--header-h', h + 'px');
+}
+function handleScroll() {
+dom.scrollTopWrapper.style.display = window.scrollY > 80 ? 'flex' : 'none';
+document.documentElement.style.setProperty('--header-h', dom.siteHeader.offsetHeight + 'px');
+if (!mediaLoaded) dom.siteHeader.classList.toggle('shrunk', window.scrollY > 80);
+setTimeout(syncPlaceholder, 320);
+}
+function scrollToTop() {
+window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+let currentRotation = 0;
+let currentZoom     = 1;
+let panX            = 0;
+let panY            = 0;
+function openEditor(url, index) {
+dom.editorTitle.textContent = `Canvas — Image ${index}`;
+resetEditor();
+dom.editorOverlay.classList.add('open');
+dom.body.style.overflow = 'hidden';
+dom.editorImg.style.width = dom.editorImg.style.height = '';
+dom.editorImg.style.maxWidth = dom.editorImg.style.maxHeight = '';
+dom.editorImg.onload = function () {
+const scale = Math.min(
+1,
+(dom.editorImgWrap.clientWidth  - 16) / dom.editorImg.naturalWidth,
+(dom.editorImgWrap.clientHeight - 16) / dom.editorImg.naturalHeight
+);
+dom.editorImg.style.width    = Math.round(dom.editorImg.naturalWidth  * scale) + 'px';
+dom.editorImg.style.height   = Math.round(dom.editorImg.naturalHeight * scale) + 'px';
+dom.editorImg.style.maxWidth = dom.editorImg.style.maxHeight = 'none';
+};
+dom.editorImg.src = url;
+}
+function closeEditor() {
+dom.editorOverlay.classList.remove('open');
+dom.body.style.overflow = '';
+}
+function applyFilters() {
+const b = parseInt(dom.brightnessSlider.value);
+const c = parseInt(dom.contrastSlider.value);
+dom.brightnessVal.textContent = b;
+dom.contrastVal.textContent   = c;
+dom.editorImg.style.filter = `brightness(${(b + 100) / 100}) contrast(${(c + 100) / 100})`;
+}
+function rotateImage(deg) {
+currentRotation = (currentRotation + deg + 360) % 360;
+applyTransform();
+}
+function zoomImage(delta) {
+currentZoom = Math.min(4, Math.max(0.2, +(currentZoom + delta).toFixed(1)));
+applyTransform();
+}
+function applyTransform() {
+dom.resizeContainer.style.transform =
+`translate(${panX}px,${panY}px) rotate(${currentRotation + dialAngle}deg) scale(${currentZoom})`;
+}
+function resetEditor() {
+currentRotation = 0; currentZoom = 1; panX = 0; panY = 0;
+dom.brightnessSlider.value    = 0;
+dom.contrastSlider.value      = 0;
+dom.brightnessVal.textContent = 0;
+dom.contrastVal.textContent   = 0;
+dom.editorImg.style.filter    = '';
+dom.editorImg.style.width     = '';
+dom.editorImg.style.height    = '';
+dom.editorImg.style.maxWidth  = '';
+dom.editorImg.style.maxHeight = '';
+dom.editorImg.style.cursor    = 'grab';
+dialAngle = 0;
+dom.dialPointer.style.transform = 'translateX(-50%) rotate(0deg)';
+dom.dialAngleLabel.textContent  = '0°';
+dom.resizeContainer.style.transform = 'translate(0px,0px) rotate(0deg) scale(1)';
+dom.resizeLabel.textContent = '';
+handlesOn = false;
+dom.resizeContainer.classList.remove('handles-on');
+dom.resizeToggleBtn.textContent        = 'Handles: Off';
+dom.resizeToggleBtn.style.background   = '';
+dom.resizeToggleBtn.style.color        = '';
+dom.resizeToggleBtn.style.borderColor  = '';
+}
+let resizing       = false, resizeDir = '';
+let resizeStartX   = 0, resizeStartY = 0;
+let resizeStartW   = 0, resizeStartH = 0;
+let resizePanStartX = 0, resizePanStartY = 0;
+let resizeRafId    = null, pendingResizeX = 0, pendingResizeY = 0;
+function initResize(e) {
+e.stopPropagation(); e.preventDefault();
+resizing    = true;
+resizeDir   = e.currentTarget.dataset.dir;
+const cx    = e.touches ? e.touches[0].clientX : e.clientX;
+const cy    = e.touches ? e.touches[0].clientY : e.clientY;
+resizeStartX = cx; resizeStartY = cy;
+resizeStartW = dom.editorImg.offsetWidth;
+resizeStartH = dom.editorImg.offsetHeight;
+resizePanStartX = panX; resizePanStartY = panY;
+dom.editorImg.style.width    = resizeStartW + 'px';
+dom.editorImg.style.height   = resizeStartH + 'px';
+dom.editorImg.style.maxWidth = dom.editorImg.style.maxHeight = 'none';
+document.addEventListener('mousemove', doResize);
+document.addEventListener('mouseup',   endResize);
+document.addEventListener('touchmove', doResize, { passive: false });
+document.addEventListener('touchend',  endResize);
+}
+function doResize(e) {
+if (!resizing) return;
+if (e.cancelable) e.preventDefault();
+pendingResizeX = e.touches ? e.touches[0].clientX : e.clientX;
+pendingResizeY = e.touches ? e.touches[0].clientY : e.clientY;
+if (resizeRafId) return;
+resizeRafId = requestAnimationFrame(applyResize);
+}
+function applyResize() {
+resizeRafId = null;
+const dx = pendingResizeX - resizeStartX;
+const dy = pendingResizeY - resizeStartY;
+let newW = resizeStartW, newH = resizeStartH, adjX = 0, adjY = 0;
+if (resizeDir.includes('e')) newW = Math.max(40, resizeStartW + dx);
+if (resizeDir.includes('s')) newH = Math.max(40, resizeStartH + dy);
+if (resizeDir.includes('w')) { newW = Math.max(40, resizeStartW - dx); adjX = (resizeStartW - newW) / 2; }
+if (resizeDir.includes('n')) { newH = Math.max(40, resizeStartH - dy); adjY = (resizeStartH - newH) / 2; }
+panX = resizePanStartX + adjX;
+panY = resizePanStartY + adjY;
+dom.resizeContainer.style.transform =
+`translate(${panX}px,${panY}px) rotate(${currentRotation + dialAngle}deg) scale(${currentZoom})`;
+if (resizeDir.includes('e') || resizeDir.includes('w')) {
+dom.editorImg.style.width    = newW + 'px';
+dom.editorImg.style.maxWidth = 'none';
+}
+if (resizeDir.includes('n') || resizeDir.includes('s')) {
+dom.editorImg.style.height    = newH + 'px';
+dom.editorImg.style.maxHeight = 'none';
+}
+dom.resizeLabel.textContent = `${Math.round(newW)} x ${Math.round(newH)}`;
+}
+function endResize() {
+resizing = false;
+document.removeEventListener('mousemove', doResize);
+document.removeEventListener('mouseup',   endResize);
+document.removeEventListener('touchmove', doResize);
+document.removeEventListener('touchend',  endResize);
+}
+document.querySelectorAll('.rh').forEach(h => {
+h.addEventListener('mousedown', initResize);
+h.addEventListener('touchstart', initResize, { passive: false });
+});
+let handlesOn = false;
+function toggleHandles() {
+handlesOn = !handlesOn;
+dom.resizeContainer.classList.toggle('handles-on', handlesOn);
+dom.resizeToggleBtn.textContent       = handlesOn ? 'Handles: On' : 'Handles: Off';
+dom.resizeToggleBtn.style.background  = handlesOn ? '#007BFF' : '';
+dom.resizeToggleBtn.style.color       = handlesOn ? 'white'   : '';
+dom.resizeToggleBtn.style.borderColor = handlesOn ? '#007BFF' : '';
+}
+let dialAngle    = 0;
+let dialDragging = false;
+let dialCenterX  = 0;
+let dialCenterY  = 0;
+function updateDial(angle) {
+let norm = ((angle % 360) + 360) % 360;
+if (norm > 180) norm -= 360;
+dialAngle = norm;
+dom.dialPointer.style.transform = `translateX(-50%) rotate(${dialAngle}deg)`;
+dom.dialAngleLabel.textContent  = `${dialAngle > 0 ? '+' : ''}${Math.round(dialAngle)}°`;
+dom.resizeContainer.style.transform =
+`translate(${panX}px,${panY}px) rotate(${currentRotation + dialAngle}deg) scale(${currentZoom})`;
+}
+function getAngle(cx, cy, px, py) {
+return Math.atan2(py - cy, px - cx) * (180 / Math.PI) + 90;
+}
+dom.rotationDial.addEventListener('mousedown', e => {
+dialDragging = true;
+const r = dom.rotationDial.getBoundingClientRect();
+dialCenterX = r.left + r.width  / 2;
+dialCenterY = r.top  + r.height / 2;
+e.preventDefault();
+});
+window.addEventListener('mousemove', e => {
+if (!dialDragging) return;
+updateDial(getAngle(dialCenterX, dialCenterY, e.clientX, e.clientY));
+});
+window.addEventListener('mouseup', () => { dialDragging = false; });
+dom.rotationDial.addEventListener('touchstart', e => {
+dialDragging = true;
+const r = dom.rotationDial.getBoundingClientRect();
+dialCenterX = r.left + r.width  / 2;
+dialCenterY = r.top  + r.height / 2;
+}, { passive: true });
+window.addEventListener('touchmove', e => {
+if (!dialDragging || e.touches.length !== 1) return;
+updateDial(getAngle(dialCenterX, dialCenterY, e.touches[0].clientX, e.touches[0].clientY));
+}, { passive: true });
+window.addEventListener('touchend', () => { dialDragging = false; });
+let startX = 0, startY = 0, isDragging = false;
+let panRafId = null, pendingPanX = 0, pendingPanY = 0;
+dom.editorImg.addEventListener('mousedown', e => {
+isDragging = true;
+startX = e.clientX - panX;
+startY = e.clientY - panY;
+dom.editorImg.style.cursor = 'grabbing';
+e.preventDefault();
+});
+window.addEventListener('mousemove', e => {
+if (!isDragging) return;
+pendingPanX = e.clientX - startX;
+pendingPanY = e.clientY - startY;
+if (panRafId) return;
+panRafId = requestAnimationFrame(() => {
+panRafId = null;
+panX = pendingPanX; panY = pendingPanY;
+dom.resizeContainer.style.transform =
+`translate(${panX}px,${panY}px) rotate(${currentRotation + dialAngle}deg) scale(${currentZoom})`;
+});
+});
+window.addEventListener('mouseup', () => {
+isDragging = false;
+dom.editorImg.style.cursor = 'grab';
+});
+dom.editorImg.addEventListener('touchstart', e => {
+if (e.touches.length !== 1) return;
+isDragging = true;
+startX = e.touches[0].clientX - panX;
+startY = e.touches[0].clientY - panY;
+}, { passive: true });
+window.addEventListener('touchmove', e => {
+if (!isDragging || e.touches.length !== 1) return;
+panX = e.touches[0].clientX - startX;
+panY = e.touches[0].clientY - startY;
+dom.resizeContainer.style.transform =
+`translate(${panX}px,${panY}px) rotate(${currentRotation + dialAngle}deg) scale(${currentZoom})`;
+}, { passive: true });
+window.addEventListener('touchend', () => { isDragging = false; });
+dom.editorImg.addEventListener('wheel', e => {
+e.preventDefault();
+const prev = currentZoom;
+currentZoom = Math.min(4, Math.max(0.2, +(currentZoom + (e.deltaY > 0 ? -0.1 : 0.1)).toFixed(2)));
+const ratio = currentZoom / prev;
+const rect  = dom.editorImg.getBoundingClientRect();
+panX += (e.clientX - (rect.left + rect.width  / 2)) * (1 - ratio);
+panY += (e.clientY - (rect.top  + rect.height / 2)) * (1 - ratio);
+dom.resizeContainer.style.transform =
+`translate(${panX}px,${panY}px) rotate(${currentRotation + dialAngle}deg) scale(${currentZoom})`;
+}, { passive: false });
+dom.themeToggle.addEventListener('click',  toggleTheme);
+dom.loadMediaBtn.addEventListener('click', loadMedia);
+dom.filterSelect.addEventListener('change', () => setFilter(dom.filterSelect.value));
+dom.listViewBtn.addEventListener('click', () => setView('list'));
+dom.gridViewBtn.addEventListener('click', cycleGrid);
+dom.muteBtn.addEventListener('click', toggleMute);
+dom.loopBtn.addEventListener('click', toggleLoop);
+dom.speedControl.addEventListener('input', updateSpeed);
+dom.globalBrightness.addEventListener('input', applyGlobal);
+dom.globalContrast.addEventListener('input',   applyGlobal);
+dom.globalResetBtn.addEventListener('click',   resetGlobal);
+dom.scrollTopWrapper.addEventListener('click', scrollToTop);
+dom.editorCloseX.addEventListener('click',    closeEditor);
+dom.closeEditorBtn.addEventListener('click',  closeEditor);
+dom.resetBtn.addEventListener('click',        resetEditor);
+dom.resizeToggleBtn.addEventListener('click', toggleHandles);
+dom.brightnessSlider.addEventListener('input', applyFilters);
+dom.contrastSlider.addEventListener('input',   applyFilters);
+dom.rotateLeftBtn.addEventListener('click',  () => rotateImage(-90));
+dom.rotateRightBtn.addEventListener('click', () => rotateImage(90));
+dom.zoomOutBtn.addEventListener('click',     () => zoomImage(-0.1));
+dom.zoomInBtn.addEventListener('click',      () => zoomImage(0.1));
+dom.editorOverlay.addEventListener('click', function (e) {
+if (e.target === this) closeEditor();
+});
+document.addEventListener('keydown', e => {
+if (e.key === 'Escape') closeEditor();
+});
+window.addEventListener('load',   adjustSpacer);
+window.addEventListener('resize', adjustSpacer);
+adjustSpacer();
+})();
+</script>
 </body>
 </html>

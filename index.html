@@ -382,7 +382,6 @@ body.dark #resizeLabel { color: #aaa; }
 </style>
 </head>
 <body>
-<!-- FIX #6: All onclick attributes removed from HTML. Events are bound in JS below. -->
 <button id="themeToggle" title="Toggle dark/light mode">🌙</button>
 <div id="siteHeader">
 <h1>Media Player</h1>
@@ -437,7 +436,6 @@ body.dark #resizeLabel { color: #aaa; }
 <div id="mediaGallery" class="list-view"></div>
 <div id="editorOverlay">
 <div id="editorModal">
-<!-- FIX #6: onclick removed — bound via addEventListener in JS -->
 <button id="editorCloseX" title="Close">&#x2715;</button>
 <h2 id="editorTitle">Edit Image</h2>
 <div id="editorBody">
@@ -460,7 +458,6 @@ body.dark #resizeLabel { color: #aaa; }
 <div class="ctrl-label">Adjust</div>
 <div class="slider-row">
 <div class="slider-row-header"><label>Brightness</label><span id="brightnessVal">0</span></div>
-<!-- FIX #6: oninput removed — bound via addEventListener in JS -->
 <input type="range" id="brightnessSlider" min="-100" max="100" value="0">
 </div>
 <div class="slider-row">
@@ -471,7 +468,6 @@ body.dark #resizeLabel { color: #aaa; }
 <div class="ctrl-section">
 <div class="ctrl-label">Rotate</div>
 <div class="icon-btn-row">
-<!-- FIX #6: onclick removed — bound via addEventListener in JS -->
 <button class="icon-btn" id="rotateLeftBtn"  title="Rotate Left">&#x21BA;</button>
 <button class="icon-btn" id="rotateRightBtn" title="Rotate Right">&#x21BB;</button>
 </div>
@@ -759,10 +755,41 @@ card.appendChild(label);
 const img = document.createElement('img');
 img.dataset.src = url;
 img.alt         = `Media ${imgNum}`;
-if (!isFallback) {
 img.onerror = function () {
-if (!card.dataset.failed) {
-card.dataset.failed = 'true';
+let retries = parseInt(card.dataset.localRetries) || 0;
+const MAX_RETRIES = 5;
+if (retries < MAX_RETRIES) {
+card.dataset.localRetries = retries + 1;
+setTimeout(() => {
+img.src = '';
+img.src = url;
+}, 1500 * card.dataset.localRetries);
+} else {
+if (!card.querySelector('.retry-overlay')) {
+const overlay = document.createElement('div');
+overlay.className = 'retry-overlay';
+overlay.style = 'position:absolute; inset:0; background:rgba(0,0,0,0.8); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; color:#fff; z-index:5; border-radius:10px;';
+const msg = document.createElement('span');
+msg.textContent = 'Failed to load after multiple attempts';
+msg.style = 'font-size:12px; font-weight:bold; color:#aaa;';
+const retryBtn = document.createElement('button');
+retryBtn.textContent = '🔄 Retry Link Manual';
+retryBtn.className = 'copy-btn';
+retryBtn.style = 'background:#28a745; border-color:#28a745; height:auto; padding:6px 14px;';
+const swapBtn = document.createElement('button');
+swapBtn.textContent = '🎬 Try as Video';
+swapBtn.className = 'edit-btn';
+swapBtn.style = 'height:auto; padding:6px 14px; margin-top:4px;';
+retryBtn.addEventListener('click', (e) => {
+e.stopPropagation();
+card.dataset.localRetries = 0;
+overlay.remove();
+img.src = '';
+img.src = url;
+});
+swapBtn.addEventListener('click', (e) => {
+e.stopPropagation();
+if (!isFallback) {
 const newCard = createVideoCard(url, imgNum, true);
 card.replaceWith(newCard);
 const idx = allMediaUrls.findIndex(m => m.url === url);
@@ -771,8 +798,14 @@ allMediaUrls[idx].type = 'video';
 updateCounts();
 }
 }
-};
+});
+overlay.appendChild(msg);
+overlay.appendChild(retryBtn);
+if (!isFallback) overlay.appendChild(swapBtn);
+card.appendChild(overlay);
 }
+}
+};
 lazyObserver.observe(img);
 card.appendChild(img);
 const urlRow  = document.createElement('div');
@@ -810,10 +843,41 @@ card.appendChild(label);
 const video = document.createElement('video');
 video.dataset.src = url;
 video.controls    = false;
-if (!isFallback) {
 video.onerror = function () {
-if (!card.dataset.failed) {
-card.dataset.failed = 'true';
+let retries = parseInt(card.dataset.localRetries) || 0;
+const MAX_RETRIES = 5;
+if (retries < MAX_RETRIES) {
+card.dataset.localRetries = retries + 1;
+setTimeout(() => {
+video.src = '';
+video.src = url;
+}, 1500 * card.dataset.localRetries);
+} else {
+if (!card.querySelector('.retry-overlay')) {
+const overlay = document.createElement('div');
+overlay.className = 'retry-overlay';
+overlay.style = 'position:absolute; inset:0; background:rgba(0,0,0,0.8); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; color:#fff; z-index:5; border-radius:10px;';
+const msg = document.createElement('span');
+msg.textContent = 'Failed to load video after multiple attempts';
+msg.style = 'font-size:12px; font-weight:bold; color:#aaa;';
+const retryBtn = document.createElement('button');
+retryBtn.textContent = '🔄 Retry Link Manual';
+retryBtn.className = 'copy-btn';
+retryBtn.style = 'background:#28a745; border-color:#28a745; height:auto; padding:6px 14px;';
+const swapBtn = document.createElement('button');
+swapBtn.textContent = '📷 Try as Image';
+swapBtn.className = 'edit-btn';
+swapBtn.style = 'height:auto; padding:6px 14px; margin-top:4px;';
+retryBtn.addEventListener('click', (e) => {
+e.stopPropagation();
+card.dataset.localRetries = 0;
+overlay.remove();
+video.src = '';
+video.src = video.dataset.src || url;
+});
+swapBtn.addEventListener('click', (e) => {
+e.stopPropagation();
+if (!isFallback) {
 const newCard = createImageCard(url, vidNum, true);
 card.replaceWith(newCard);
 const idx = allMediaUrls.findIndex(m => m.url === url);
@@ -822,8 +886,14 @@ allMediaUrls[idx].type = 'image';
 updateCounts();
 }
 }
-};
+});
+overlay.appendChild(msg);
+overlay.appendChild(retryBtn);
+if (!isFallback) overlay.appendChild(swapBtn);
+card.appendChild(overlay);
 }
+}
+};
 videoLazyObserver.observe(video);
 card.appendChild(video);
 const urlRow  = document.createElement('div');

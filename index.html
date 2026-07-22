@@ -260,6 +260,23 @@ width: 100%; min-height: 60px; display: flex; align-items: center;
 justify-content: center; font-size: 12px; color: #888; font-style: italic;
 border-radius: 5px; background: #f9f9f9;
 }
+.failed-placeholder {
+width: 100%; min-height: 120px; display: flex; flex-direction: column;
+align-items: center; justify-content: center; gap: 10px;
+border-radius: 5px; background: #fff5f5; border: 1px dashed #f5c6cb;
+}
+.failed-placeholder .failed-icon { font-size: 28px; line-height: 1; }
+.failed-placeholder .failed-msg { font-size: 12px; color: #c0392b; font-weight: 600; text-align: center; }
+.failed-placeholder .failed-sub { font-size: 11px; color: #999; text-align: center; }
+.retry-btn {
+background: #dc3545; color: white; border: none; border-radius: 5px;
+padding: 6px 16px; font-size: 12px; font-weight: 600; cursor: pointer;
+margin-left: 0; transition: background 0.2s;
+}
+.retry-btn:hover { background: #b02a37; }
+body.dark .failed-placeholder { background: #2d1a1a; border-color: #7a3030; }
+body.dark .failed-placeholder .failed-msg { color: #e07070; }
+body.dark .failed-placeholder .failed-sub { color: #777; }
 .media-label { font-weight: bold; font-size: 13px; margin-bottom: 8px; color: #333; width: 100%; text-align: center; padding-right: 0; }
 .media-card img { max-width: 100%; height: auto; border-radius: 5px; }
 .media-card video { width: 100%; max-height: 500px; border-radius: 5px; }
@@ -382,6 +399,7 @@ body.dark #resizeLabel { color: #aaa; }
 </style>
 </head>
 <body>
+<!-- FIX #6: All onclick attributes removed from HTML. Events are bound in JS below. -->
 <button id="themeToggle" title="Toggle dark/light mode">🌙</button>
 <div id="siteHeader">
 <h1>Media Player</h1>
@@ -436,6 +454,7 @@ body.dark #resizeLabel { color: #aaa; }
 <div id="mediaGallery" class="list-view"></div>
 <div id="editorOverlay">
 <div id="editorModal">
+<!-- FIX #6: onclick removed — bound via addEventListener in JS -->
 <button id="editorCloseX" title="Close">&#x2715;</button>
 <h2 id="editorTitle">Edit Image</h2>
 <div id="editorBody">
@@ -458,6 +477,7 @@ body.dark #resizeLabel { color: #aaa; }
 <div class="ctrl-label">Adjust</div>
 <div class="slider-row">
 <div class="slider-row-header"><label>Brightness</label><span id="brightnessVal">0</span></div>
+<!-- FIX #6: oninput removed — bound via addEventListener in JS -->
 <input type="range" id="brightnessSlider" min="-100" max="100" value="0">
 </div>
 <div class="slider-row">
@@ -468,6 +488,7 @@ body.dark #resizeLabel { color: #aaa; }
 <div class="ctrl-section">
 <div class="ctrl-label">Rotate</div>
 <div class="icon-btn-row">
+<!-- FIX #6: onclick removed — bound via addEventListener in JS -->
 <button class="icon-btn" id="rotateLeftBtn"  title="Rotate Left">&#x21BA;</button>
 <button class="icon-btn" id="rotateRightBtn" title="Rotate Right">&#x21BB;</button>
 </div>
@@ -740,6 +761,64 @@ setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
 }
 });
 }
+function showFailedCard(card, url, mediaNum, type) {
+card.dataset.failed = 'exhausted';
+const existing = card.querySelector('img, video, .failed-placeholder, .media-placeholder');
+if (existing) existing.remove();
+const fp = document.createElement('div');
+fp.className = 'failed-placeholder';
+fp.innerHTML = `
+<div class="failed-icon">⚠️</div>
+<div class="failed-msg">Failed to Load</div>
+<div class="failed-sub">Media ${mediaNum}</div>
+`;
+const retryBtn = document.createElement('button');
+retryBtn.className   = 'retry-btn';
+retryBtn.textContent = '↺ Retry';
+retryBtn.addEventListener('click', () => {
+fp.remove();
+delete card.dataset.failed;
+if (type === 'video') {
+const video = document.createElement('video');
+video.dataset.src = url;
+video.controls    = false;
+videoLazyObserver.observe(video);
+retryWithBackoff(video, url, mediaNum, type, card, 0);
+card.insertBefore(video, card.querySelector('.url-row'));
+} else {
+const img = document.createElement('img');
+img.dataset.src = url;
+img.alt         = `Media ${mediaNum}`;
+lazyObserver.observe(img);
+retryWithBackoff(img, url, mediaNum, type, card, 0);
+card.insertBefore(img, card.querySelector('.url-row'));
+}
+});
+fp.appendChild(retryBtn);
+card.insertBefore(fp, card.querySelector('.url-row'));
+}
+function retryWithBackoff(el, url, mediaNum, type, card, attempt) {
+const delays = [1000, 2000, 4000];
+el.onerror = function () {
+if (card.dataset.failed === 'exhausted') return;
+if (attempt < delays.length) {
+setTimeout(() => {
+if (card.dataset.failed === 'exhausted') return;
+if (type === 'video') {
+el.src = '';
+el.load();
+el.src = url;
+} else {
+el.src = '';
+el.src = url;
+}
+retryWithBackoff(el, url, mediaNum, type, card, attempt + 1);
+}, delays[attempt]);
+} else {
+showFailedCard(card, url, mediaNum, type);
+}
+};
+}
 function createImageCard(url, imgNum, isFallback = false) {
 const card = document.createElement('div');
 card.className    = 'media-card type-image';
@@ -755,41 +834,10 @@ card.appendChild(label);
 const img = document.createElement('img');
 img.dataset.src = url;
 img.alt         = `Media ${imgNum}`;
-img.onerror = function () {
-let retries = parseInt(card.dataset.localRetries) || 0;
-const MAX_RETRIES = 5;
-if (retries < MAX_RETRIES) {
-card.dataset.localRetries = retries + 1;
-setTimeout(() => {
-img.src = '';
-img.src = url;
-}, 1500 * card.dataset.localRetries);
-} else {
-if (!card.querySelector('.retry-overlay')) {
-const overlay = document.createElement('div');
-overlay.className = 'retry-overlay';
-overlay.style = 'position:absolute; inset:0; background:rgba(0,0,0,0.8); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; color:#fff; z-index:5; border-radius:10px;';
-const msg = document.createElement('span');
-msg.textContent = 'Failed to load after multiple attempts';
-msg.style = 'font-size:12px; font-weight:bold; color:#aaa;';
-const retryBtn = document.createElement('button');
-retryBtn.textContent = '🔄 Retry Link Manual';
-retryBtn.className = 'copy-btn';
-retryBtn.style = 'background:#28a745; border-color:#28a745; height:auto; padding:6px 14px;';
-const swapBtn = document.createElement('button');
-swapBtn.textContent = '🎬 Try as Video';
-swapBtn.className = 'edit-btn';
-swapBtn.style = 'height:auto; padding:6px 14px; margin-top:4px;';
-retryBtn.addEventListener('click', (e) => {
-e.stopPropagation();
-card.dataset.localRetries = 0;
-overlay.remove();
-img.src = '';
-img.src = url;
-});
-swapBtn.addEventListener('click', (e) => {
-e.stopPropagation();
 if (!isFallback) {
+img.onerror = function () {
+if (!card.dataset.failed) {
+card.dataset.failed = 'true';
 const newCard = createVideoCard(url, imgNum, true);
 card.replaceWith(newCard);
 const idx = allMediaUrls.findIndex(m => m.url === url);
@@ -798,14 +846,10 @@ allMediaUrls[idx].type = 'video';
 updateCounts();
 }
 }
-});
-overlay.appendChild(msg);
-overlay.appendChild(retryBtn);
-if (!isFallback) overlay.appendChild(swapBtn);
-card.appendChild(overlay);
-}
-}
 };
+} else {
+retryWithBackoff(img, url, imgNum, 'image', card, 0);
+}
 lazyObserver.observe(img);
 card.appendChild(img);
 const urlRow  = document.createElement('div');
@@ -843,41 +887,10 @@ card.appendChild(label);
 const video = document.createElement('video');
 video.dataset.src = url;
 video.controls    = false;
-video.onerror = function () {
-let retries = parseInt(card.dataset.localRetries) || 0;
-const MAX_RETRIES = 5;
-if (retries < MAX_RETRIES) {
-card.dataset.localRetries = retries + 1;
-setTimeout(() => {
-video.src = '';
-video.src = url;
-}, 1500 * card.dataset.localRetries);
-} else {
-if (!card.querySelector('.retry-overlay')) {
-const overlay = document.createElement('div');
-overlay.className = 'retry-overlay';
-overlay.style = 'position:absolute; inset:0; background:rgba(0,0,0,0.8); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; color:#fff; z-index:5; border-radius:10px;';
-const msg = document.createElement('span');
-msg.textContent = 'Failed to load video after multiple attempts';
-msg.style = 'font-size:12px; font-weight:bold; color:#aaa;';
-const retryBtn = document.createElement('button');
-retryBtn.textContent = '🔄 Retry Link Manual';
-retryBtn.className = 'copy-btn';
-retryBtn.style = 'background:#28a745; border-color:#28a745; height:auto; padding:6px 14px;';
-const swapBtn = document.createElement('button');
-swapBtn.textContent = '📷 Try as Image';
-swapBtn.className = 'edit-btn';
-swapBtn.style = 'height:auto; padding:6px 14px; margin-top:4px;';
-retryBtn.addEventListener('click', (e) => {
-e.stopPropagation();
-card.dataset.localRetries = 0;
-overlay.remove();
-video.src = '';
-video.src = video.dataset.src || url;
-});
-swapBtn.addEventListener('click', (e) => {
-e.stopPropagation();
 if (!isFallback) {
+video.onerror = function () {
+if (!card.dataset.failed) {
+card.dataset.failed = 'true';
 const newCard = createImageCard(url, vidNum, true);
 card.replaceWith(newCard);
 const idx = allMediaUrls.findIndex(m => m.url === url);
@@ -886,14 +899,10 @@ allMediaUrls[idx].type = 'image';
 updateCounts();
 }
 }
-});
-overlay.appendChild(msg);
-overlay.appendChild(retryBtn);
-if (!isFallback) overlay.appendChild(swapBtn);
-card.appendChild(overlay);
-}
-}
 };
+} else {
+retryWithBackoff(video, url, vidNum, 'video', card, 0);
+}
 videoLazyObserver.observe(video);
 card.appendChild(video);
 const urlRow  = document.createElement('div');

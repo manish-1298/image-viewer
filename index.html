@@ -461,6 +461,7 @@ body.dark #resizeLabel { color: #aaa; }
 <div id="editorImgWrap">
 <div id="resizeContainer">
 <img id="editorImg" src="" alt="Edit preview" />
+<video id="editorVideo" controls style="display:none;max-width:100%;max-height:100%;border-radius:3px;"></video>
 <div class="rh rh-nw" data-dir="nw"></div>
 <div class="rh rh-n"  data-dir="n"></div>
 <div class="rh rh-ne" data-dir="ne"></div>
@@ -564,6 +565,7 @@ editorTitle:        document.getElementById('editorTitle'),
 editorImgWrap:      document.getElementById('editorImgWrap'),
 resizeContainer:    document.getElementById('resizeContainer'),
 editorImg:          document.getElementById('editorImg'),
+editorVideo:        document.getElementById('editorVideo'),
 resizeLabel:        document.getElementById('resizeLabel'),
 brightnessSlider:   document.getElementById('brightnessSlider'),
 brightnessVal:      document.getElementById('brightnessVal'),
@@ -606,7 +608,7 @@ return 'image';
 let currentView   = 'list';
 let gridCols      = 2;
 let currentFilter = 'all';
-let isMuted       = false;
+let isMuted       = true;
 let isLooping     = false;
 let mediaLoaded   = false;
 const BATCH_SIZE = 30;
@@ -639,6 +641,7 @@ dom.mediaGallery.classList.remove('cols-3', 'cols-4');
 if (gridCols === 3) dom.mediaGallery.classList.add('cols-3');
 if (gridCols === 4) dom.mediaGallery.classList.add('cols-4');
 dom.gridViewBtn.title = `Grid view (${gridCols} per row — click to change)`;
+dom.gridViewBtn.innerHTML = `<svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg><span style="font-size:10px;font-weight:700;line-height:1;">${gridCols}×</span>`;
 }
 function setView(mode) {
 currentView = mode;
@@ -714,6 +717,10 @@ entries.forEach(entry => {
 if (!entry.isIntersecting) return;
 const video = entry.target;
 if (video.dataset.src && !video.src) {
+video.onloadeddata = function () {
+const card = video.closest('.media-card');
+if (card) updateCardBadge(card, 'video');
+};
 video.src = video.dataset.src;
 const b = parseInt(dom.globalBrightness.value);
 const c = parseInt(dom.globalContrast.value);
@@ -733,12 +740,39 @@ const lazyObserver = new IntersectionObserver((entries) => {
 entries.forEach(entry => {
 if (!entry.isIntersecting) return;
 const img = entry.target;
-if (img.src && img.src !== window.location.href) return;
+if (img.dataset.loaded === 'true') return;
+img.dataset.loaded = 'true';
+img.dataset.loading = 'true'; // synchronous guard BEFORE src is set
+lazyObserver.unobserve(img);
+img.onload = function () {
+img.dataset.loading = 'false';
+const card = img.closest('.media-card');
+if (card) updateCardBadge(card, 'image');
+};
+if (img.dataset.isFallback !== 'true') {
+img.onerror = function () {
+if (!img.isConnected) return;
+setTimeout(() => {
+if (!img.isConnected) return;
+if (img.naturalWidth > 0) return;
+const card = img.closest('.media-card');
+if (!card || card.dataset.failed) return;
+card.dataset.failed = 'true';
+const seqNum = parseInt(img.alt.replace('Media ', ''));
+const newCard = createVideoCard(img.dataset.src, seqNum, true);
+card.replaceWith(newCard);
+const idx = allMediaUrls.findIndex(m => m.url === img.dataset.src);
+if (idx !== -1) { allMediaUrls[idx].type = 'video'; updateCounts(); }
+}, 500);
+};
+} else {
+const card = img.closest('.media-card');
+if (card) retryWithBackoff(img, img.dataset.src, parseInt(img.alt.replace('Media ', '')), card, 0);
+}
 img.src = img.dataset.src;
 const b = parseInt(dom.globalBrightness.value);
 const c = parseInt(dom.globalContrast.value);
 if (b !== 0 || c !== 0) img.style.filter = `brightness(${(b + 100) / 100}) contrast(${(c + 100) / 100})`;
-lazyObserver.unobserve(img);
 });
 }, { rootMargin: '300px 0px' });
 function copyUrl(btn, url) {
@@ -761,7 +795,19 @@ setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
 }
 });
 }
-function showFailedCard(card, url, mediaNum, type) {
+function updateCardBadge(card, type) {
+const badge = card.querySelector('.type-badge');
+if (type === 'image') {
+if (badge) { badge.className = 'type-badge badge-image'; badge.textContent = '📷 Image'; }
+card.classList.remove('type-unknown', 'type-video'); card.classList.add('type-image');
+card.dataset.type = 'image';
+} else {
+if (badge) { badge.className = 'type-badge badge-video'; badge.textContent = '🎬 Video'; }
+card.classList.remove('type-unknown', 'type-image'); card.classList.add('type-video');
+card.dataset.type = 'video';
+}
+}
+function showFailedCard(card, url, mediaNum) {
 card.dataset.failed = 'exhausted';
 const existing = card.querySelector('img, video, .failed-placeholder, .media-placeholder');
 if (existing) existing.remove();
@@ -778,78 +824,75 @@ retryBtn.textContent = '↺ Retry';
 retryBtn.addEventListener('click', () => {
 fp.remove();
 delete card.dataset.failed;
-if (type === 'video') {
-const video = document.createElement('video');
-video.dataset.src = url;
-video.controls    = false;
-videoLazyObserver.observe(video);
-retryWithBackoff(video, url, mediaNum, type, card, 0);
-card.insertBefore(video, card.querySelector('.url-row'));
-} else {
 const img = document.createElement('img');
-img.dataset.src = url;
-img.alt         = `Media ${mediaNum}`;
-lazyObserver.observe(img);
-retryWithBackoff(img, url, mediaNum, type, card, 0);
-card.insertBefore(img, card.querySelector('.url-row'));
+img.alt = `Media ${mediaNum}`;
+img.dataset.loading = 'true'; // set BEFORE src — synchronous guard
+img.onload = function () {
+img.dataset.loading = 'false';
+updateCardBadge(card, 'image');
+const urlRow = card.querySelector('.url-row');
+if (urlRow && !urlRow.querySelector('.edit-btn')) {
+const editBtn = document.createElement('button');
+editBtn.className   = 'edit-btn';
+editBtn.textContent = 'Edit';
+editBtn.addEventListener('click', () => openEditor(url, mediaNum));
+urlRow.insertBefore(editBtn, urlRow.querySelector('.copy-btn'));
 }
+};
+img.onerror = function () {
+if (img.dataset.loading !== 'true') return;
+img.dataset.loading = 'false';
+if (!img.isConnected) return;
+if (card.dataset.failed === 'exhausted') return;
+img.remove();
+const video = document.createElement('video');
+video.controls = false;
+video.onloadeddata = function () { updateCardBadge(card, 'video'); };
+retryWithBackoff(video, url, mediaNum, card, 0);
+video.src = url;
+card.insertBefore(video, card.querySelector('.url-row'));
+};
+img.src = url; // assign AFTER handlers — loading flag already true
+card.insertBefore(img, card.querySelector('.url-row'));
 });
 fp.appendChild(retryBtn);
 card.insertBefore(fp, card.querySelector('.url-row'));
 }
-function retryWithBackoff(el, url, mediaNum, type, card, attempt) {
+function retryWithBackoff(el, url, mediaNum, card, attempt) {
 const delays = [1000, 2000, 4000];
 el.onerror = function () {
 if (card.dataset.failed === 'exhausted') return;
 if (attempt < delays.length) {
 setTimeout(() => {
 if (card.dataset.failed === 'exhausted') return;
-if (type === 'video') {
-el.src = '';
-el.load();
-el.src = url;
+if (el.tagName === 'VIDEO') {
+el.src = ''; el.load(); el.src = url;
 } else {
-el.src = '';
-el.src = url;
+el.src = ''; el.src = url;
 }
-retryWithBackoff(el, url, mediaNum, type, card, attempt + 1);
+retryWithBackoff(el, url, mediaNum, card, attempt + 1);
 }, delays[attempt]);
 } else {
-showFailedCard(card, url, mediaNum, type);
+showFailedCard(card, url, mediaNum);
 }
 };
 }
 function createImageCard(url, imgNum, isFallback = false) {
 const card = document.createElement('div');
-card.className    = 'media-card type-image';
-card.dataset.type = 'image';
+card.className    = 'media-card type-unknown';
+card.dataset.type = 'unknown';
 const badge = document.createElement('div');
-badge.className   = 'type-badge badge-image';
-badge.textContent = '📷 Image';
+badge.className   = 'type-badge badge-unknown';
+badge.textContent = '⏳ Unknown';
 card.appendChild(badge);
 const label = document.createElement('div');
 label.className   = 'media-label';
 label.textContent = `Media ${imgNum}`;
 card.appendChild(label);
 const img = document.createElement('img');
-img.dataset.src = url;
-img.alt         = `Media ${imgNum}`;
-if (!isFallback) {
-img.onerror = function () {
-if (!card.dataset.failed) {
-card.dataset.failed = 'true';
-const newCard = createVideoCard(url, imgNum, true);
-card.replaceWith(newCard);
-const idx = allMediaUrls.findIndex(m => m.url === url);
-if (idx !== -1 && allMediaUrls[idx].type !== 'video') {
-allMediaUrls[idx].type = 'video';
-updateCounts();
-}
-}
-};
-} else {
-retryWithBackoff(img, url, imgNum, 'image', card, 0);
-}
+img.dataset.src       = url;
+img.dataset.isFallback = isFallback ? 'true' : 'false';
+img.alt               = `Media ${imgNum}`;
 lazyObserver.observe(img);
 card.appendChild(img);
 const urlRow  = document.createElement('div');
@@ -874,11 +917,11 @@ return card;
 }
 function createVideoCard(url, vidNum, isFallback = false) {
 const card = document.createElement('div');
-card.className    = 'media-card type-video';
-card.dataset.type = 'video';
+card.className    = 'media-card type-unknown';
+card.dataset.type = 'unknown';
 const badge = document.createElement('div');
-badge.className   = 'type-badge badge-video';
-badge.textContent = '🎬 Video';
+badge.className   = 'type-badge badge-unknown';
+badge.textContent = '⏳ Unknown';
 card.appendChild(badge);
 const label = document.createElement('div');
 label.className   = 'media-label';
@@ -901,7 +944,7 @@ updateCounts();
 }
 };
 } else {
-retryWithBackoff(video, url, vidNum, 'video', card, 0);
+retryWithBackoff(video, url, vidNum, card, 0);
 }
 videoLazyObserver.observe(video);
 card.appendChild(video);
@@ -916,6 +959,11 @@ copyBtn.className   = 'copy-btn';
 copyBtn.textContent = 'Copy';
 copyBtn.addEventListener('click', () => copyUrl(copyBtn, url));
 urlRow.appendChild(caption);
+const editBtnV = document.createElement('button');
+editBtnV.className   = 'edit-btn';
+editBtnV.textContent = 'Edit';
+editBtnV.addEventListener('click', () => openEditor(url, vidNum));
+urlRow.appendChild(editBtnV);
 urlRow.appendChild(copyBtn);
 card.appendChild(urlRow);
 return card;
@@ -1055,11 +1103,23 @@ let currentRotation = 0;
 let currentZoom     = 1;
 let panX            = 0;
 let panY            = 0;
+let editorFitW = 0, editorFitH = 0, editorIsVideo = false;
 function openEditor(url, index) {
-dom.editorTitle.textContent = `Canvas — Image ${index}`;
+dom.editorTitle.textContent = `Canvas — Media ${index}`;
 resetEditor();
 dom.editorOverlay.classList.add('open');
 dom.body.style.overflow = 'hidden';
+const isVideo = /\.(mp4|webm|ogg|ogv|mov|mkv|avi|flv|m4v|3gp|wmv|ts|m3u8|mpg|mpeg)(\?|$)/i.test(url);
+editorIsVideo = isVideo;
+if (isVideo) {
+dom.editorImg.style.display   = 'none';
+dom.editorImg.src             = '';
+dom.editorVideo.style.display = 'block';
+dom.editorVideo.src           = url;
+} else {
+dom.editorVideo.style.display = 'none';
+dom.editorVideo.src           = '';
+dom.editorImg.style.display   = 'block';
 dom.editorImg.style.width = dom.editorImg.style.height = '';
 dom.editorImg.style.maxWidth = dom.editorImg.style.maxHeight = '';
 dom.editorImg.onload = function () {
@@ -1068,11 +1128,14 @@ const scale = Math.min(
 (dom.editorImgWrap.clientWidth  - 16) / dom.editorImg.naturalWidth,
 (dom.editorImgWrap.clientHeight - 16) / dom.editorImg.naturalHeight
 );
-dom.editorImg.style.width    = Math.round(dom.editorImg.naturalWidth  * scale) + 'px';
-dom.editorImg.style.height   = Math.round(dom.editorImg.naturalHeight * scale) + 'px';
+editorFitW = Math.round(dom.editorImg.naturalWidth  * scale);
+editorFitH = Math.round(dom.editorImg.naturalHeight * scale);
+dom.editorImg.style.width    = editorFitW + 'px';
+dom.editorImg.style.height   = editorFitH + 'px';
 dom.editorImg.style.maxWidth = dom.editorImg.style.maxHeight = 'none';
 };
 dom.editorImg.src = url;
+}
 }
 function closeEditor() {
 dom.editorOverlay.classList.remove('open');
@@ -1104,10 +1167,14 @@ dom.contrastSlider.value      = 0;
 dom.brightnessVal.textContent = 0;
 dom.contrastVal.textContent   = 0;
 dom.editorImg.style.filter    = '';
-dom.editorImg.style.width     = '';
-dom.editorImg.style.height    = '';
-dom.editorImg.style.maxWidth  = '';
-dom.editorImg.style.maxHeight = '';
+if (editorFitW && editorFitH) {
+dom.editorImg.style.width    = editorFitW + 'px';
+dom.editorImg.style.height   = editorFitH + 'px';
+dom.editorImg.style.maxWidth = dom.editorImg.style.maxHeight = 'none';
+} else {
+dom.editorImg.style.width = dom.editorImg.style.height = '';
+dom.editorImg.style.maxWidth = dom.editorImg.style.maxHeight = '';
+}
 dom.editorImg.style.cursor    = 'grab';
 dialAngle = 0;
 dom.dialPointer.style.transform = 'translateX(-50%) rotate(0deg)';
@@ -1290,6 +1357,8 @@ dom.filterSelect.addEventListener('change', () => setFilter(dom.filterSelect.val
 dom.listViewBtn.addEventListener('click', () => setView('list'));
 dom.gridViewBtn.addEventListener('click', cycleGrid);
 dom.muteBtn.addEventListener('click', toggleMute);
+dom.muteBtn.classList.add('muted');
+dom.muteIcon.innerHTML = '<path d="M16.5 12A4.5 4.5 0 0 0 14 7.97v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51A8.796 8.796 0 0 0 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06A8.99 8.99 0 0 0 17.73 18l1.27 1.27L20.27 18 5.27 3 4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>';
 dom.loopBtn.addEventListener('click', toggleLoop);
 dom.speedControl.addEventListener('input', updateSpeed);
 dom.globalBrightness.addEventListener('input', applyGlobal);
